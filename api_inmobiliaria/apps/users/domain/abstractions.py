@@ -10,16 +10,18 @@ class IUserRepository(Protocol):
     """
 
     @classmethod
-    def create(cls, data: Dict[str, Any], role: str) -> User:
+    def create(cls, data: Dict[str, Any], role: str, is_active: bool) -> User:
         """
         Inserts a new user into the database.
 
         #### Parameters:
         - data: Dictionary containing the user's data.
         - role: Role of the user.
+        - is_active: Boolean that indicates if the user is active or not.
 
         #### Raises:
-        - DatabaseConnectionError: If there is an operational error with the database.
+        - DatabaseConnectionError: If there is an operational error with the
+        database.
         """
 
         ...
@@ -33,18 +35,19 @@ class IUserRepository(Protocol):
         - filters: Keyword arguments that define the filters to apply.
 
         #### Raises:
-        - DatabaseConnectionError: If there is an operational error with the database.
+        - DatabaseConnectionError: If there is an operational error with the
+        database.
         """
 
         ...
 
     @classmethod
-    def get_profile_data(
+    def get_role_data(
         cls, user: Optional[User], role: Optional[str], **filters
     ) -> QuerySet[Model]:
         """
-        Retrieves the related data of a user profile from the database according to the
-        provided filters.
+        Retrieves the related data of a user profile from the database according to
+        the provided filters.
 
         #### Parameters:
         - user: User instance from which to retrieve the related data.
@@ -52,7 +55,8 @@ class IUserRepository(Protocol):
         - filters: Keyword arguments that define the filters to apply.
 
         #### Raises:
-        - DatabaseConnectionError: If there is an operational error with the database.
+        - DatabaseConnectionError: If there is an operational error with the
+        database.
         - ValueError: If the 'user' or 'role' parameter is not provided.
         """
 

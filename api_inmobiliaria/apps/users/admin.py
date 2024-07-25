@@ -42,12 +42,9 @@ class SearcherRoleAdminPanel(admin.ModelAdmin):
         "address",
         "phone_number",
         "is_phone_verified",
-        "date_joined",
     ]
     search_fields = ["uuid", "cc", "phone_number"]
     list_filter = ["is_phone_verified"]
-    readonly_fields = ["date_joined"]
-    ordering = ["-date_joined"]
 
 
 class JWTAdminPanel(admin.ModelAdmin):

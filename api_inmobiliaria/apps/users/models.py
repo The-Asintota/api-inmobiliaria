@@ -19,7 +19,7 @@ class UserManager(BaseUserManager):
     instances.
     """
 
-    def _create_user(
+    def __create_user(
         self,
         related_model_name: str = None,
         related_data: Dict[str, Any] = None,
@@ -51,20 +51,18 @@ class UserManager(BaseUserManager):
 
     def create_user(
         self,
+        is_active: bool,
         related_model_name: str = None,
         profile_data: Dict[str, Any] = None,
         base_data: Dict[str, Any] = None,
-        is_active: bool = False,
     ) -> AbstractBaseUser:
         """
         Create and save a User with the given email and password.
         """
 
-        base_data.setdefault("is_staff", False)
-        base_data.setdefault("is_superuser", False)
         base_data.setdefault("is_active", is_active)
 
-        return self._create_user(
+        return self.__create_user(
             related_model_name=related_model_name,
             related_data=profile_data,
             base_data=base_data,
@@ -94,7 +92,7 @@ class UserManager(BaseUserManager):
         base_data["email"] = email
         base_data["password"] = password
 
-        return self._create_user(base_data=base_data)
+        return self.__create_user(base_data=base_data)
 
 
 class User(AbstractBaseUser, PermissionsMixin):
@@ -196,9 +194,6 @@ class SearcherRole(models.Model):
     )
     is_phone_verified = models.BooleanField(
         db_column="is_phone_verified", default=False
-    )
-    date_joined = models.DateTimeField(
-        db_column="date_joined", auto_now_add=True
     )
 
     class Meta:

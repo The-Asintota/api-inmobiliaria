@@ -59,7 +59,7 @@ class SearcherUserProfileDataSerializer(ErrorMessagesSerializer):
 
     def validate_full_name(self, value: str) -> str:
         if not self.profile_queryset:
-            self.profile_queryset = self._user_repository.get_profile_data(
+            self.profile_queryset = self._user_repository.get_role_data(
                 role=UserRoles.SEARCHER.value, full_name=value
             )
         elif self.profile_queryset.first():
@@ -72,7 +72,7 @@ class SearcherUserProfileDataSerializer(ErrorMessagesSerializer):
 
     def validate_address(self, value: str) -> str:
         if not self.profile_queryset:
-            self.profile_queryset = self._user_repository.get_profile_data(
+            self.profile_queryset = self._user_repository.get_role_data(
                 role=UserRoles.SEARCHER.value,
                 address=value,
             )
@@ -86,7 +86,7 @@ class SearcherUserProfileDataSerializer(ErrorMessagesSerializer):
 
     def validate_phone_number(self, value: str) -> str:
         if not self.profile_queryset:
-            self.profile_queryset = self._user_repository.get_profile_data(
+            self.profile_queryset = self._user_repository.get_role_data(
                 role=UserRoles.SEARCHER.value,
                 phone_number=value,
             )
