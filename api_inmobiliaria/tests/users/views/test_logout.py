@@ -1,4 +1,4 @@
-from apps.users.models import BaseUserData, UserRoles
+from apps.users.models import User, UserRoles
 from apps.exceptions import DatabaseConnectionError
 from tests.users.factory import JWTFactory
 from tests.utils import empty_queryset
@@ -193,7 +193,7 @@ class TestAPIView:
         get_user: Mock = user_repository_mock.get
 
         # Setting the return values
-        get_user.return_value = empty_queryset(model=BaseUserData)
+        get_user.return_value = empty_queryset(model=User)
 
         # Simulating the request
         client, path = setUp

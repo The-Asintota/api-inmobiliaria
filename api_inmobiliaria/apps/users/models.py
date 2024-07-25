@@ -54,6 +54,7 @@ class UserManager(BaseUserManager):
         related_model_name: str = None,
         profile_data: Dict[str, Any] = None,
         base_data: Dict[str, Any] = None,
+        is_active: bool = False,
     ) -> AbstractBaseUser:
         """
         Create and save a User with the given email and password.
@@ -61,7 +62,7 @@ class UserManager(BaseUserManager):
 
         base_data.setdefault("is_staff", False)
         base_data.setdefault("is_superuser", False)
-        base_data.setdefault("is_active", False)
+        base_data.setdefault("is_active", is_active)
 
         return self._create_user(
             related_model_name=related_model_name,
@@ -93,17 +94,13 @@ class UserManager(BaseUserManager):
         base_data["email"] = email
         base_data["password"] = password
 
-        return self._create_user(
-            base_data=base_data,
-        )
+        return self._create_user(base_data=base_data)
 
 
-class BaseUserData(AbstractBaseUser, PermissionsMixin):
+class User(AbstractBaseUser, PermissionsMixin):
     """
-    BaseUserData is the base model for all user types. Contains fields that are common to
-    all users, regardless of their role. User data related to their role is stored in
-    separate profile models, which are linked to this model through a generic
-    relationship.
+    Custom user model for the system. This class defines the structure of a user in
+    the system.
     """
 
     uuid = models.UUIDField(
@@ -117,7 +114,6 @@ class BaseUserData(AbstractBaseUser, PermissionsMixin):
         db_column="email",
         max_length=40,
         unique=True,
-        db_index=True,
         null=False,
         blank=False,
     )
@@ -130,10 +126,19 @@ class BaseUserData(AbstractBaseUser, PermissionsMixin):
         on_delete=models.SET_NULL,
         null=True,
     )
-    content_object = GenericForeignKey(ct_field="content_type", fk_field="uuid")
+    role_data_uuid = models.UUIDField(
+        db_column="role_data_uuid",
+        null=True,
+        blank=True,
+    )
+    content_object = GenericForeignKey(
+        ct_field="content_type", fk_field="role_data_uuid"
+    )
     is_staff = models.BooleanField(db_column="is_staff", default=False)
     is_superuser = models.BooleanField(db_column="is_superuser", default=False)
     is_active = models.BooleanField(db_column="is_active", default=False)
+    is_deleted = models.BooleanField(db_column="is_deleted", default=False)
+    deleted_at = models.DateTimeField(db_column="deleted_at", null=True)
     last_login = models.DateTimeField(db_column="last_login", null=True)
     date_joined = models.DateTimeField(
         db_column="date_joined", auto_now_add=True
@@ -145,10 +150,9 @@ class BaseUserData(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = []
 
     class Meta:
-        db_table = "base_user_data"
-        verbose_name = "Base user data"
-        verbose_name_plural = "Base users data"
-        ordering = ["is_active", "-date_joined"]
+        db_table = "user"
+        verbose_name = "user"
+        verbose_name_plural = "users"
 
     def __str__(self):
         """
@@ -158,14 +162,23 @@ class BaseUserData(AbstractBaseUser, PermissionsMixin):
         return self.email
 
 
-class SearcherUser(models.Model):
+class SearcherRole(models.Model):
     """
-    This model represents a user with the role `seacheruser`.
+    This model represents a user with the role `seacher`.
     """
 
     uuid = models.UUIDField(db_column="uuid", default=uuid4, primary_key=True)
-    full_name = models.CharField(
-        db_column="full_name", max_length=60, null=False, blank=False
+    name = models.CharField(
+        db_column="name", max_length=40, null=False, blank=False
+    )
+    last_name = models.CharField(
+        db_column="last_name", max_length=40, null=False, blank=False
+    )
+    cc = models.IntegerField(
+        db_column="cc",
+        null=True,
+        blank=True,
+        unique=True,
     )
     address = models.CharField(
         db_column="address",
@@ -181,15 +194,17 @@ class SearcherUser(models.Model):
         blank=True,
         unique=True,
     )
+    is_phone_verified = models.BooleanField(
+        db_column="is_phone_verified", default=False
+    )
     date_joined = models.DateTimeField(
         db_column="date_joined", auto_now_add=True
     )
 
     class Meta:
-        db_table = "searcher_user"
-        verbose_name = "searcher user"
-        verbose_name_plural = "searcher users"
-        ordering = ["-date_joined"]
+        db_table = "searcher_role"
+        verbose_name = "searcher role"
+        verbose_name_plural = "searchers role"
 
     def __str__(self):
         """
@@ -197,6 +212,13 @@ class SearcherUser(models.Model):
         """
 
         return self.uuid.__str__()
+
+    def get_full_name(self) -> str:
+        """
+        Return the full name of the user.
+        """
+
+        return f"{self.name.capitalize()} {self.last_name.capitalize()}"
 
 
 class JWT(models.Model):
@@ -207,7 +229,7 @@ class JWT(models.Model):
     uuid = models.UUIDField(db_column="uuid", default=uuid4, primary_key=True)
     user = models.ForeignKey(
         db_column="user",
-        to="BaseUserData",
+        to="User",
         to_field="uuid",
         on_delete=models.SET_NULL,
         db_index=True,
@@ -272,7 +294,6 @@ class JWTBlacklist(models.Model):
         db_table = "jwt_blacklist"
         verbose_name = "JWT blacklist"
         verbose_name_plural = "JWT blacklist"
-        ordering = ["-date_joined"]
 
     def __str__(self) -> str:
         """
@@ -287,4 +308,4 @@ class UserRoles(Enum):
     This enum represents the roles that a user can have.
     """
 
-    SEARCHER = f"{SearcherUser.__name__.lower()}"
+    SEARCHER = f"{SearcherRole.__name__.lower()}"

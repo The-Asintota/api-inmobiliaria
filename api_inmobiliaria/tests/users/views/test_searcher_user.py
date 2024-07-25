@@ -1,5 +1,5 @@
 from apps.users.domain.constants import SearcherUser
-from apps.users.models import BaseUserData, UserRoles
+from apps.users.models import User, UserRoles
 from apps.exceptions import DatabaseConnectionError
 from apps.utils import ERROR_MESSAGES
 from django.test import Client
@@ -197,7 +197,7 @@ class TestAPIViewPOSTMethod:
     ) -> None:
         # Creating a user
         data_copy = data.copy()
-        _ = BaseUserData.objects.create_user(
+        _ = User.objects.create_user(
             base_data={
                 "email": data_copy["email"],
                 "password": data_copy["password"],

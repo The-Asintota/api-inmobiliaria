@@ -1,4 +1,4 @@
-from apps.users.models import BaseUserData, JWT
+from apps.users.models import User, JWT
 from django.db.models import QuerySet, Model
 from .typing import JWToken, AccessToken, RefreshToken
 from typing import Dict, Any, Tuple, Protocol, Optional
@@ -10,7 +10,7 @@ class IUserRepository(Protocol):
     """
 
     @classmethod
-    def create(cls, data: Dict[str, Any], role: str) -> BaseUserData:
+    def create(cls, data: Dict[str, Any], role: str) -> User:
         """
         Inserts a new user into the database.
 
@@ -25,7 +25,7 @@ class IUserRepository(Protocol):
         ...
 
     @classmethod
-    def get(cls, **filters) -> QuerySet[BaseUserData]:
+    def get(cls, **filters) -> QuerySet[User]:
         """
         Retrieves a user from the database according to the provided filters.
 
@@ -40,14 +40,14 @@ class IUserRepository(Protocol):
 
     @classmethod
     def get_profile_data(
-        cls, user: Optional[BaseUserData], role: Optional[str], **filters
+        cls, user: Optional[User], role: Optional[str], **filters
     ) -> QuerySet[Model]:
         """
         Retrieves the related data of a user profile from the database according to the
         provided filters.
 
         #### Parameters:
-        - user: BaseUserData instance from which to retrieve the related data.
+        - user: User instance from which to retrieve the related data.
         - role: Role of the user from which to retrieve the related data.
         - filters: Keyword arguments that define the filters to apply.
 
@@ -80,7 +80,7 @@ class IJWTRepository(Protocol):
         ...
 
     @classmethod
-    def add_to_checklist(cls, token: JWToken, user: BaseUserData) -> None:
+    def add_to_checklist(cls, token: JWToken, user: User) -> None:
         """
         Associate a JSON Web Token with a user by adding it to the checklist.
 
@@ -89,7 +89,7 @@ class IJWTRepository(Protocol):
 
         #### Parameters:
         - token: A JWToken.
-        - user: An instance of the BaseUserData model.
+        - user: An instance of the User model.
 
         #### Raises:
         - DatabaseConnectionError: If there is an operational error with the database.
@@ -122,12 +122,12 @@ class ITokenClass(Protocol):
     """
 
     @classmethod
-    def get_token(cls, user: BaseUserData) -> Tuple[AccessToken, RefreshToken]:
+    def get_token(cls, user: User) -> Tuple[AccessToken, RefreshToken]:
         """
         Generates the JSON WEB Tokens for the user and saves them to the database.
 
         #### Parameters:
-        - user: An instance of the BaseUserData model for which to generate the tokens.
+        - user: An instance of the User model for which to generate the tokens.
         """
 
         ...

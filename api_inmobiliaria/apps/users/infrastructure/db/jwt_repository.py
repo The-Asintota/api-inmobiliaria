@@ -1,5 +1,5 @@
 from apps.users.domain.typing import JWToken, JWTPayload
-from apps.users.models import BaseUserData, JWT, JWTBlacklist
+from apps.users.models import User, JWT, JWTBlacklist
 from apps.exceptions import DatabaseConnectionError
 from rest_framework_simplejwt.utils import datetime_from_epoch
 from django.db.models import QuerySet
@@ -44,7 +44,7 @@ class JWTRepository:
 
     @classmethod
     def add_to_checklist(
-        cls, token: JWToken, payload: JWTPayload, user: BaseUserData
+        cls, token: JWToken, payload: JWTPayload, user: User
     ) -> None:
         """
         Associate a JSON Web Token with a user by adding it to the checklist.
@@ -55,7 +55,7 @@ class JWTRepository:
         #### Parameters:
         - token: A JWToken.
         - payload: The payload of the token.
-        - user: An instance of the BaseUserData model.
+        - user: An instance of the User model.
 
         #### Raises:
         - DatabaseConnectionError: If there is an operational error with the database.

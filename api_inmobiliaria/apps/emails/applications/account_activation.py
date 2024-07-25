@@ -5,7 +5,7 @@ from apps.emails.paths import TEMPLATES
 from apps.emails.exceptions import AccountActivationError, TokenError
 from apps.users.domain.abstractions import IUserRepository
 from apps.users.domain.typing import UserUUID
-from apps.users.models import BaseUserData
+from apps.users.models import User
 from apps.exceptions import ResourceNotFoundError
 from django.http.request import HttpRequest
 from django.core.mail import EmailMessage
@@ -48,7 +48,7 @@ class AccountActivation:
         self.smtp_class = smtp_class
 
     def _get_message_data(
-        self, user: BaseUserData, token: Token, request: HttpRequest
+        self, user: User, token: Token, request: HttpRequest
     ) -> Dict[str, Any]:
         """
         Constructs and returns a dictionary containing the subject, body, and
@@ -59,7 +59,7 @@ class AccountActivation:
         and a unique token.
 
         #### Parameters:
-        - user: An instance of the BaseUserData model.
+        - user: An instance of the User model.
         - token: A unique identifier that guarantees the security and validity of the
         initiated process.
         - request: This object comes from the view and contains the request
@@ -83,13 +83,13 @@ class AccountActivation:
         }
 
     def _compose_and_dispatch(
-        self, user: BaseUserData, token: Token, request: HttpRequest
+        self, user: User, token: Token, request: HttpRequest
     ) -> None:
         """
         Compose and send the message to the user's email.
 
         #### Parameters:
-        - user: A instance of the BaseUserData model.
+        - user: A instance of the User model.
         - token: This is a unique identifier that guarantees the security and validity
         of the initiated process.
         - request: An instance of the HttpRequest class.
@@ -101,12 +101,12 @@ class AccountActivation:
         email.content_subtype = "html"
         email.send()
 
-    def send_email(self, user: BaseUserData, request: HttpRequest) -> None:
+    def send_email(self, user: User, request: HttpRequest) -> None:
         """
         Send the account activation message for a user.
 
         #### Parameters:
-        - user: A instance of the BaseUserData model.
+        - user: A instance of the User model.
         - request: An instance of the HttpRequest class.
 
         #### Raises:

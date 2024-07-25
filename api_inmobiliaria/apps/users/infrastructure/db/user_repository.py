@@ -1,4 +1,4 @@
-from apps.users.models import BaseUserData, UserManager
+from apps.users.models import User, UserManager
 from apps.exceptions import DatabaseConnectionError
 from django.contrib.contenttypes.models import ContentType
 from django.db import OperationalError
@@ -12,10 +12,10 @@ class UserRepository:
     or queries related to a user.
     """
 
-    model = BaseUserData
+    model = User
 
     @classmethod
-    def create(cls, data: Dict[str, Any], role: str) -> BaseUserData:
+    def create(cls, data: Dict[str, Any], role: str) -> User:
         """
         Inserts a new user into the database.
 
@@ -43,7 +43,7 @@ class UserRepository:
         return user
 
     @classmethod
-    def get(cls, **filters) -> QuerySet[BaseUserData]:
+    def get(cls, **filters) -> QuerySet[User]:
         """
         Retrieves a user from the database according to the provided filters.
 
@@ -75,14 +75,14 @@ class UserRepository:
 
     @classmethod
     def get_profile_data(
-        cls, user: BaseUserData = None, role: str = None, **filters
+        cls, user: User = None, role: str = None, **filters
     ) -> QuerySet[Model]:
         """
         Retrieves the related data of a user profile from the database according to the
         provided filters.
 
         #### Parameters:
-        - user: BaseUserData instance from which to retrieve the related data.
+        - user: User instance from which to retrieve the related data.
         - role: Role of the user from which to retrieve the related data.
         - filters: Keyword arguments that define the filters to apply.
 

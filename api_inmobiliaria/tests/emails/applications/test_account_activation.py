@@ -7,7 +7,7 @@ from apps.emails.applications import AccountActivation
 from apps.emails.domain.constants import SubjectsMail
 from apps.emails.paths import TEMPLATES
 from apps.emails.exceptions import AccountActivationError
-from apps.users.models import BaseUserData
+from apps.users.models import User
 from unittest.mock import Mock
 from uuid import uuid4
 import pytest
@@ -23,7 +23,7 @@ class TestApplicationSendMail:
 
     def test_send_success(self, token_generator: Mock) -> None:
         # Preparing the data
-        user = BaseUserData(
+        user = User(
             uuid=uuid4(),
             email="user1@email.com",
             is_active=False,
@@ -75,7 +75,7 @@ class TestApplicationSendMail:
 
     def test_if_user_already_active(self, token_generator: Mock) -> None:
         # Preparing the data
-        user = BaseUserData(
+        user = User(
             uuid=uuid4(),
             email="user1@email.com",
             is_active=True,

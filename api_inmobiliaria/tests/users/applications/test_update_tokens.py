@@ -1,7 +1,7 @@
 from apps.users.infrastructure.serializers import TokenObtainPairSerializer
 from apps.users.infrastructure.db import JWTRepository, UserRepository
 from apps.users.applications import JWTUsesCases
-from apps.users.models import BaseUserData, JWT, JWTBlacklist, UserRoles
+from apps.users.models import User, JWT, JWTBlacklist, UserRoles
 from apps.exceptions import (
     DatabaseConnectionError,
     ResourceNotFoundError,
@@ -169,7 +169,7 @@ class TestApplication:
         get_token: Mock = jwt_class.get_token
 
         # Setting the return values
-        get_user.return_value = empty_queryset(model=BaseUserData)
+        get_user.return_value = empty_queryset(model=User)
 
         # Instantiating the application
         with pytest.raises(ResourceNotFoundError):

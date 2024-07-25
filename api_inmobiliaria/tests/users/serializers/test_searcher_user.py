@@ -2,7 +2,7 @@ from apps.users.infrastructure.serializers import (
     SearcherUserRegisterSerializer,
 )
 from apps.users.domain.constants import SearcherUser
-from apps.users.models import BaseUserData
+from apps.users.models import User
 from apps.utils import ERROR_MESSAGES
 from tests.utils import empty_queryset
 from unittest.mock import Mock, patch
@@ -34,7 +34,7 @@ class TestSerializer:
         get: Mock = repository.get
 
         # Setting the return values
-        get.return_value = empty_queryset(model=BaseUserData)
+        get.return_value = empty_queryset(model=User)
 
         # Instantiating the serializer
         serializer = self.serializer_class(data=data)
@@ -136,7 +136,7 @@ class TestSerializer:
         get: Mock = repository.get
 
         # Setting the return values
-        get.return_value = empty_queryset(model=BaseUserData)
+        get.return_value = empty_queryset(model=User)
 
         # Instantiating the serializer
         serializer = self.serializer_class(data=data)
@@ -185,7 +185,7 @@ class TestSerializer:
 
         # Setting the return values
         get.return_value = queryset
-        user.return_value = BaseUserData
+        user.return_value = User
 
         # Instantiating the serializer
         serializer = self.serializer_class(data=data)

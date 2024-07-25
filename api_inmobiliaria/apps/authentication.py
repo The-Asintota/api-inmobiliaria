@@ -1,4 +1,4 @@
-from apps.users.models import BaseUserData
+from apps.users.models import User
 from rest_framework_simplejwt.authentication import (
     JWTAuthentication as BaseAJWTuthentication,
 )
@@ -44,7 +44,7 @@ class JWTAuthentication(BaseAJWTuthentication):
 
         raise InvalidToken(code="authentication_failed", detail=messages)
 
-    def get_user(self, validated_token: Token) -> BaseUserData:
+    def get_user(self, validated_token: Token) -> User:
         """
         Attempts to find and return a user using the given validated token.
         """

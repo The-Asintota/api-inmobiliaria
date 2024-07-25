@@ -1,6 +1,6 @@
 from apps.users.infrastructure.db import JWTRepository, UserRepository
 from apps.users.applications import JWTUsesCases
-from apps.users.models import BaseUserData, JWT, JWTBlacklist, UserRoles
+from apps.users.models import UserWTBlacklist, UserRoles
 from apps.exceptions import (
     DatabaseConnectionError,
     ResourceNotFoundError,
@@ -71,7 +71,7 @@ class TestApplication:
 
         # Setting the return values
         get_jwt.return_value = empty_queryset(model=JWT)
-        first.return_value = BaseUserData
+        first.return_value = User
 
         # Instantiating the application
         with pytest.raises(ResourceNotFoundError):
@@ -136,7 +136,7 @@ class TestApplication:
         add_to_checklist: Mock = jwt_repository.add_to_checklist
 
         # Setting the return values
-        get_user.return_value = empty_queryset(model=BaseUserData)
+        get_user.return_value = empty_queryset(model=User)
 
         # Instantiating the application
         with pytest.raises(ResourceNotFoundError):

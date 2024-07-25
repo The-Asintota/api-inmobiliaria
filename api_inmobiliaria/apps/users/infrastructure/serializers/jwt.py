@@ -5,7 +5,7 @@ from apps.users.infrastructure.schemas.jwt import (
 )
 from apps.users.infrastructure.db import JWTRepository
 from apps.users.domain.typing import AccessToken, RefreshToken
-from apps.users.models import BaseUserData
+from apps.users.models import User
 from apps.utils import ErrorMessagesSerializer, decode_jwt
 from rest_framework_simplejwt.serializers import (
     TokenObtainPairSerializer as BaseTokenSerializer,
@@ -36,7 +36,7 @@ class TokenObtainPairSerializer(BaseTokenSerializer):
     jwt_repository = JWTRepository
 
     @classmethod
-    def get_token(cls, user: BaseUserData) -> Tuple[AccessToken, RefreshToken]:
+    def get_token(cls, user: User) -> Tuple[AccessToken, RefreshToken]:
         """
         Generates the JSON WEB Tokens for the user and saves them to the database.
         """

@@ -1,10 +1,11 @@
 from django.contrib import admin
-from .models import BaseUserData, SearcherUser, JWT, JWTBlacklist
+from .models import User, SearcherRole, JWT, JWTBlacklist
 
 
-class BaseUserDataAdminPanel(admin.ModelAdmin):
+@admin.register(User)
+class UserAdminPanel(admin.ModelAdmin):
     """
-    Admin panel configuration for the BaseUserData model.
+    Admin panel configuration for the User model.
     """
 
     list_display = [
@@ -12,31 +13,39 @@ class BaseUserDataAdminPanel(admin.ModelAdmin):
         "email",
         "password",
         "content_type",
+        "role_data_uuid",
         "is_staff",
         "is_superuser",
         "is_active",
+        "is_deleted",
+        "deleted_at",
         "date_joined",
         "last_login",
     ]
-    list_filter = ["is_active"]
-    search_fields = ["email", "uuid"]
+    list_filter = ["is_active", "is_deleted"]
+    search_fields = ["email", "uuid", "role_data_uuid"]
     readonly_fields = ["date_joined", "password"]
     ordering = ["-date_joined"]
 
 
-class SearcherUserAdminPanel(admin.ModelAdmin):
+@admin.register(SearcherRole)
+class SearcherRoleAdminPanel(admin.ModelAdmin):
     """
-    Admin panel configuration for the SearcherUser model.
+    Admin panel configuration for the SearcherRole model.
     """
 
     list_display = [
         "uuid",
-        "full_name",
+        "name",
+        "last_name",
+        "cc",
         "address",
         "phone_number",
+        "is_phone_verified",
         "date_joined",
     ]
-    search_fields = ["uuid", "full_name", "phone_number"]
+    search_fields = ["uuid", "cc", "phone_number"]
+    list_filter = ["is_phone_verified"]
     readonly_fields = ["date_joined"]
     ordering = ["-date_joined"]
 
@@ -70,7 +79,5 @@ class JWTBlacklistedAdminPanel(admin.ModelAdmin):
     ordering = ["-date_joined"]
 
 
-admin.site.register(BaseUserData, BaseUserDataAdminPanel)
-admin.site.register(SearcherUser, SearcherUserAdminPanel)
 admin.site.register(JWT, JWTAdminPanel)
 admin.site.register(JWTBlacklist, JWTBlacklistedAdminPanel)

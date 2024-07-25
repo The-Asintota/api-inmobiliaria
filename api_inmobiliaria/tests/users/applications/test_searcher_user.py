@@ -1,6 +1,6 @@
 from apps.users.infrastructure.db import UserRepository
 from apps.users.applications import SearcherUserUsesCases
-from apps.users.models import BaseUserData, SearcherUser
+from apps.users.models import User, SearcherRole
 from apps.emails.domain.constants import SubjectsMail
 from apps.exceptions import DatabaseConnectionError
 from django.test import RequestFactory
@@ -31,8 +31,8 @@ class TestApplication:
         input_data = data.copy()
 
         # Asserting that the user does not exist in the database
-        assert not BaseUserData.objects.filter(email=email).exists()
-        assert not SearcherUser.objects.filter(full_name=full_name).exists()
+        assert not User.objects.filter(email=email).exists()
+        assert not SearcherRole.objects.filter(full_name=full_name).exists()
 
         # Instantiating the application and calling the method
         self.application_class(user_repository=UserRepository).create_user(
@@ -41,8 +41,8 @@ class TestApplication:
         )
 
         # Asserting that the user was created successfully
-        assert BaseUserData.objects.filter(email=email).exists()
-        assert SearcherUser.objects.filter(full_name=full_name).exists()
+        assert User.objects.filter(email=email).exists()
+        assert SearcherRole.objects.filter(full_name=full_name).exists()
 
         # Asserting that the email was sent
         assert len(mail.outbox) == 1
