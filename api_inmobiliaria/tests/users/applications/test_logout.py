@@ -63,7 +63,7 @@ class TestApplication:
         access_data = JWTFactory.access(exp=False)
 
         # Mocking the methods
-        get_user: Mock = user_repository.get
+        get_user: Mock = user_repository.get_user_data
         first: Mock = get_user.first
         get_jwt: Mock = jwt_repository.get
         add_to_blacklist: Mock = jwt_repository.add_to_blacklist
@@ -130,7 +130,7 @@ class TestApplication:
         jwt_repository: Mock,
     ) -> None:
         # Mocking the methods
-        get_user: Mock = user_repository.get
+        get_user: Mock = user_repository.get_user_data
         get_jwt: Mock = jwt_repository.get
         add_to_blacklist: Mock = jwt_repository.add_to_blacklist
         add_to_checklist: Mock = jwt_repository.add_to_checklist
@@ -159,7 +159,7 @@ class TestApplication:
         self, user_repository: Mock, jwt_repository: Mock
     ) -> None:
         # Mocking the methods
-        get_user: Mock = user_repository.get
+        get_user: Mock = user_repository.get_user_data
         get_jwt: Mock = jwt_repository.get
         add_to_blacklist: Mock = jwt_repository.add_to_blacklist
         add_to_checklist: Mock = jwt_repository.add_to_checklist

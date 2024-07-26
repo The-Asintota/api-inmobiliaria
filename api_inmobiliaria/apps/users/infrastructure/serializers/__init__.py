@@ -1,7 +1,6 @@
-from .base import BaseUserSerializer
+from .base import BaseUserDataSerializer
 from .searcher_user import (
-    SearcherUserSerializer,
-    SearcherUserRegisterSerializer,
+    SearcherRegisterSerializer,
 )
 from .jwt import (
     AuthenticationSerializer,

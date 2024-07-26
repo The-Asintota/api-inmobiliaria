@@ -1,2 +1,2 @@
-from .searcher_user import SearcherUserUsesCases
+from .searcher_user import SearcherUsesCases
 from .jwt import JWTUsesCases

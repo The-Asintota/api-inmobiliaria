@@ -56,7 +56,7 @@ class JWTAuthentication(BaseAJWTuthentication):
                 detail="Token contained no recognizable user identification"
             )
 
-        user = self._user_repository.get(uuid=user_uuid).first()
+        user = self._user_repository.get_user_data(uuid=user_uuid).first()
 
         if not user:
             raise AuthenticationFailed(

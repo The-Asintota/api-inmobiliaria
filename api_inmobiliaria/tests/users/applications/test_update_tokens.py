@@ -162,7 +162,7 @@ class TestApplication:
         self, user_repository: Mock, jwt_repository: Mock, jwt_class: Mock
     ) -> None:
         # Mocking the methods
-        get_user: Mock = user_repository.get
+        get_user: Mock = user_repository.get_user_data
         get_jwt: Mock = jwt_repository.get
         add_to_blacklist: Mock = jwt_repository.add_to_blacklist
         add_to_checklist: Mock = jwt_repository.add_to_checklist
@@ -194,7 +194,7 @@ class TestApplication:
         self, user_repository: Mock, jwt_repository: Mock, jwt_class: Mock
     ) -> None:
         # Mocking the methods
-        get_user: Mock = user_repository.get
+        get_user: Mock = user_repository.get_user_data
         get_jwt: Mock = jwt_repository.get
         add_to_blacklist: Mock = jwt_repository.add_to_blacklist
         add_to_checklist: Mock = jwt_repository.add_to_checklist

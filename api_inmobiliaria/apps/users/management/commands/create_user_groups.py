@@ -1,17 +1,7 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import Group, Permission
-from apps.users.models import UserRoles
+from apps.users.domain.constants import USER_ROLE_PERMISSIONS, UserRoles
 from typing import List
-
-
-permissions_user_map = {
-    UserRoles.SEARCHER.value: [
-        f"change_{UserRoles.SEARCHER.value}",
-        f"delete_{UserRoles.SEARCHER.value}",
-        f"view_{UserRoles.SEARCHER.value}",
-        "add_jwt",
-    ]
-}
 
 
 class Command(BaseCommand):
@@ -78,7 +68,7 @@ class Command(BaseCommand):
         for role in user_roles:
             group = self._define_group(name=role)
             self._assign_permissions(
-                permissions=permissions_user_map.get(role), group=group
+                permissions=USER_ROLE_PERMISSIONS.get(role), group=group
             )
 
             self.stdout.write(

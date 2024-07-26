@@ -27,7 +27,7 @@ class IUserRepository(Protocol):
         ...
 
     @classmethod
-    def get(cls, **filters) -> QuerySet[User]:
+    def get_user_data(cls, **filters) -> QuerySet[User]:
         """
         Retrieves a user from the database according to the provided filters.
 

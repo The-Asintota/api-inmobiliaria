@@ -17,7 +17,7 @@ class EmailBackend(ModelBackend):
         Authenticate a user with the given email and password.
         """
 
-        user = UserRepository.get(email=email).first()
+        user = UserRepository.get_user_data(email=email).first()
 
         if not user:
             return None

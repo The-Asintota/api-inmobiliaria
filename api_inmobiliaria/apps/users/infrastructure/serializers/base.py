@@ -1,5 +1,5 @@
 from apps.users.infrastructure.db import UserRepository
-from apps.users.domain.constants import SearcherUser
+from apps.users.domain.constants import UserProperties
 from apps.utils import ErrorMessagesSerializer, ERROR_MESSAGES
 from rest_framework import serializers
 from django.core.validators import RegexValidator
@@ -8,18 +8,18 @@ from django.core.exceptions import ValidationError
 from typing import Dict
 
 
-class BaseUserSerializer(ErrorMessagesSerializer):
+class BaseUserDataSerializer(ErrorMessagesSerializer):
     """
     Defines the base data of a user.
     """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._user_repository = UserRepository
+        self.__user_repository = UserRepository
 
     email = serializers.CharField(
         required=True,
-        max_length=SearcherUser.EMAIL_MAX_LENGTH.value,
+        max_length=UserProperties.EMAIL_MAX_LENGTH.value,
         error_messages={
             "max_length": ERROR_MESSAGES["max_length"].format(
                 max_length="{max_length}"
@@ -36,8 +36,8 @@ class BaseUserSerializer(ErrorMessagesSerializer):
     password = serializers.CharField(
         required=True,
         write_only=True,
-        max_length=SearcherUser.PASSWORD_MAX_LENGTH.value,
-        min_length=SearcherUser.PASSWORD_MIN_LENGTH.value,
+        max_length=UserProperties.PASSWORD_MAX_LENGTH.value,
+        min_length=UserProperties.PASSWORD_MIN_LENGTH.value,
         style={"input_type": "password"},
         error_messages={
             "max_length": ERROR_MESSAGES["max_length"].format(
@@ -57,9 +57,9 @@ class BaseUserSerializer(ErrorMessagesSerializer):
         Validate that the email is not in use.
         """
 
-        user_queryset = self._user_repository.get(email=value)
+        user = self.__user_repository.get_user_data(email=value)
 
-        if user_queryset.first():
+        if user.first():
             raise serializers.ValidationError(
                 code="invalid_data",
                 detail=ERROR_MESSAGES["email_in_use"],
@@ -89,7 +89,10 @@ class BaseUserSerializer(ErrorMessagesSerializer):
         return value
 
     def validate(self, data: Dict[str, str]) -> Dict[str, str]:
-        # Check if the password and confirm password match.
+        """
+        Check if the password and confirm password match.
+        """
+
         password = data["password"]
         confirm_password = data["confirm_password"]
 

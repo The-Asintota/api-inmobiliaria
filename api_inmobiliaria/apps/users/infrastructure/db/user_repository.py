@@ -34,7 +34,7 @@ class UserRepository:
         try:
             user = user_manager.create_user(
                 base_data=data["base_data"],
-                profile_data=data["profile_data"],
+                role_data=data["role_data"],
                 related_model_name=role,
                 is_active=is_active,
             )
@@ -46,7 +46,7 @@ class UserRepository:
         return user
 
     @classmethod
-    def get(cls, **filters) -> QuerySet[User]:
+    def get_user_data(cls, **filters) -> QuerySet[User]:
         """
         Retrieves a user from the database according to the provided filters.
 

@@ -141,7 +141,7 @@ class AccountActivation:
         - ResourceNotFoundError: The user does not exist.
         """
 
-        user = self._user_repository.get(uuid=user_uuid).first()
+        user = self._user_repository.get_user_data(uuid=user_uuid).first()
 
         if not user:
             raise ResourceNotFoundError(

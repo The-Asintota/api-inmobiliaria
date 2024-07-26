@@ -1,12 +1,12 @@
 from apps.users.infrastructure.serializers import (
-    SearcherUserRegisterSerializer,
+    SearcherRegisterSerializer,
 )
 from apps.users.infrastructure.db import UserRepository
 from apps.users.infrastructure.views.base import MappedAPIView
 from apps.users.infrastructure.schemas.searcher_user import (
     SearcherUserRegisterMethodSchema,
 )
-from apps.users.applications import SearcherUserUsesCases
+from apps.users.applications import SearcherUsesCases
 from rest_framework.serializers import Serializer
 from rest_framework.response import Response
 from rest_framework.request import Request
@@ -22,7 +22,7 @@ class SearcherUserAPIView(MappedAPIView):
     permissions, and serializers based on the HTTP method of the incoming request.
     """
 
-    application_class = SearcherUserUsesCases(user_repository=UserRepository)
+    application_class = SearcherUsesCases(user_repository=UserRepository)
     application_mapping = {
         "POST": application_class.create_user,
     }
@@ -33,7 +33,7 @@ class SearcherUserAPIView(MappedAPIView):
         "POST": [],
     }
     serializer_mapping = {
-        "POST": SearcherUserRegisterSerializer,
+        "POST": SearcherRegisterSerializer,
     }
 
     def _handle_valid_request(

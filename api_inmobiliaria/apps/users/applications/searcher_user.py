@@ -1,17 +1,18 @@
+from django.contrib.auth.models import Group
 from apps.users.domain.abstractions import IUserRepository
-from apps.users.models import UserRoles
+from apps.users.domain.constants import UserRoles
 from apps.users.signals import user_registered
 from rest_framework.request import Request
 from typing import Dict, Any
 
 
-class SearcherUserUsesCases:
+class SearcherUsesCases:
     """
     Uses cases for the searcher user role. It contains the business logic for the
     operations that can be performed by a user with the `searcheruser` role.
     """
 
-    _signal = user_registered
+    __signal = user_registered
 
     def __init__(self, user_repository: IUserRepository) -> None:
         """ "
@@ -22,7 +23,7 @@ class SearcherUserUsesCases:
         operations related to a user.
         """
 
-        self._user_repository = user_repository
+        self.__user_repository = user_repository
 
     def create_user(self, data: Dict[str, Any], request: Request) -> None:
         """
@@ -34,16 +35,15 @@ class SearcherUserUsesCases:
         incoming request.
         """
 
-        user = self._user_repository.create(
-            data={
-                "base_data": {
-                    "email": data["email"],
-                    "password": data["password"],
-                },
-                "profile_data": {
-                    "full_name": data["full_name"],
-                },
-            },
+        user = self.__user_repository.create(
             role=UserRoles.SEARCHER.value,
+            data=data,
+            is_active=False,
         )
-        self._signal.send(sender=__name__, user=user, request=request)
+
+        # Add the user to the group
+        group = Group.objects.get(name=UserRoles.SEARCHER.value)
+        user.groups.add(group)
+        user.save()
+
+        self.__signal.send(sender=__name__, user=user, request=request)

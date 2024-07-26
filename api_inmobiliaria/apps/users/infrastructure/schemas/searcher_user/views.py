@@ -1,4 +1,4 @@
-from apps.users.domain.constants import SearcherUser
+from apps.users.domain.constants import SearcherProperties, UserProperties
 from apps.utils import ERROR_MESSAGES
 from drf_spectacular.utils import (
     extend_schema,
@@ -36,7 +36,7 @@ SearcherUserRegisterMethodSchema = extend_schema(
                                 ERROR_MESSAGES["null"],
                                 ERROR_MESSAGES["invalid"],
                                 ERROR_MESSAGES["max_length"].format(
-                                    max_length=SearcherUser.FULL_NAME_MAX_LENGTH.value,
+                                    max_length=SearcherProperties.NAME_MAX_LENGTH.value,
                                 ),
                             ],
                             "email": [
@@ -45,7 +45,7 @@ SearcherUserRegisterMethodSchema = extend_schema(
                                 ERROR_MESSAGES["null"],
                                 ERROR_MESSAGES["invalid"],
                                 ERROR_MESSAGES["max_length"].format(
-                                    max_length=SearcherUser.EMAIL_MAX_LENGTH.value,
+                                    max_length=UserProperties.EMAIL_MAX_LENGTH.value,
                                 ),
                                 ERROR_MESSAGES["email_in_use"],
                             ],
@@ -55,10 +55,10 @@ SearcherUserRegisterMethodSchema = extend_schema(
                                 ERROR_MESSAGES["null"],
                                 ERROR_MESSAGES["invalid"],
                                 ERROR_MESSAGES["max_length"].format(
-                                    max_length=SearcherUser.PASSWORD_MAX_LENGTH.value,
+                                    max_length=UserProperties.PASSWORD_MAX_LENGTH.value,
                                 ),
                                 ERROR_MESSAGES["min_length"].format(
-                                    min_length=SearcherUser.PASSWORD_MIN_LENGTH.value,
+                                    min_length=UserProperties.PASSWORD_MIN_LENGTH.value,
                                 ),
                             ],
                             "confirm_password": [

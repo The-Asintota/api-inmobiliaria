@@ -121,7 +121,7 @@ class JWTUsesCases:
         - ResourceNotFoundError: If the user does not exist.
         """
 
-        user = self._user_repository.get(
+        user = self._user_repository.get_user_data(
             uuid=data["access"]["user_uuid"]
         ).first()
 
@@ -156,7 +156,7 @@ class JWTUsesCases:
         - ResourceNotFoundError: If the user does not exist.
         """
 
-        user = self._user_repository.get(
+        user = self._user_repository.get_user_data(
             uuid=data["access"]["user_uuid"]
         ).first()
 

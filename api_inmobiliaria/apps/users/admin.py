@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import User, SearcherRole, JWT, JWTBlacklist
+from .models import User, Searcher, JWT, JWTBlacklist
 
 
 @admin.register(User)
@@ -28,10 +28,10 @@ class UserAdminPanel(admin.ModelAdmin):
     ordering = ["-date_joined"]
 
 
-@admin.register(SearcherRole)
-class SearcherRoleAdminPanel(admin.ModelAdmin):
+@admin.register(Searcher)
+class SearcherAdminPanel(admin.ModelAdmin):
     """
-    Admin panel configuration for the SearcherRole model.
+    Admin panel configuration for the Searcher model.
     """
 
     list_display = [

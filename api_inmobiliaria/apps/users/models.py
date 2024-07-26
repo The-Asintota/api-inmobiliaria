@@ -1,3 +1,4 @@
+from phonenumber_field.modelfields import PhoneNumberField
 from django.contrib.auth.models import (
     UserManager as BaseUserManager,
     AbstractBaseUser,
@@ -5,11 +6,10 @@ from django.contrib.auth.models import (
 )
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
-from django.utils import timezone
 from django.db import models
-from phonenumber_field.modelfields import PhoneNumberField
+from django.utils import timezone
+from apps.users.domain.constants import UserProperties, SearcherProperties
 from uuid import uuid4
-from enum import Enum
 from typing import Dict, Any
 
 
@@ -22,7 +22,7 @@ class UserManager(BaseUserManager):
     def __create_user(
         self,
         related_model_name: str = None,
-        related_data: Dict[str, Any] = None,
+        role_data: Dict[str, Any] = None,
         base_data: Dict[str, Any] = None,
     ) -> AbstractBaseUser:
         """
@@ -31,11 +31,11 @@ class UserManager(BaseUserManager):
 
         related_instance = None
 
-        if related_model_name and related_data:
+        if related_model_name and role_data:
             related_model = ContentType.objects.get(
                 model=related_model_name
             ).model_class()
-            related_instance = related_model.objects.create(**related_data)
+            related_instance = related_model.objects.create(**role_data)
 
         email = base_data.pop("email")
         password = base_data.pop("password")
@@ -53,7 +53,7 @@ class UserManager(BaseUserManager):
         self,
         is_active: bool,
         related_model_name: str = None,
-        profile_data: Dict[str, Any] = None,
+        role_data: Dict[str, Any] = None,
         base_data: Dict[str, Any] = None,
     ) -> AbstractBaseUser:
         """
@@ -64,7 +64,7 @@ class UserManager(BaseUserManager):
 
         return self.__create_user(
             related_model_name=related_model_name,
-            related_data=profile_data,
+            role_data=role_data,
             base_data=base_data,
         )
 
@@ -110,7 +110,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
     email = models.EmailField(
         db_column="email",
-        max_length=40,
+        max_length=UserProperties.EMAIL_MAX_LENGTH.value,
         unique=True,
         null=False,
         blank=False,
@@ -160,34 +160,41 @@ class User(AbstractBaseUser, PermissionsMixin):
         return self.email
 
 
-class SearcherRole(models.Model):
+class Searcher(models.Model):
     """
     This model represents a user with the role `seacher`.
     """
 
     uuid = models.UUIDField(db_column="uuid", default=uuid4, primary_key=True)
     name = models.CharField(
-        db_column="name", max_length=40, null=False, blank=False
+        db_column="name",
+        max_length=SearcherProperties.NAME_MAX_LENGTH.value,
+        null=False,
+        blank=False,
     )
     last_name = models.CharField(
-        db_column="last_name", max_length=40, null=False, blank=False
+        db_column="last_name",
+        max_length=SearcherProperties.LAST_NAME_MAX_LENGTH.value,
+        null=False,
+        blank=False,
     )
-    cc = models.IntegerField(
+    cc = models.CharField(
         db_column="cc",
+        max_length=SearcherProperties.CC_MAX_LENGTH.value,
         null=True,
         blank=True,
         unique=True,
     )
     address = models.CharField(
         db_column="address",
-        max_length=90,
+        max_length=SearcherProperties.ADDRESS_MAX_LENGTH.value,
         null=True,
         blank=True,
         unique=True,
     )
     phone_number = PhoneNumberField(
         db_column="phone_number",
-        max_length=25,
+        max_length=SearcherProperties.PHONE_NUMBER_MAX_LENGTH.value,
         null=True,
         blank=True,
         unique=True,
@@ -197,9 +204,9 @@ class SearcherRole(models.Model):
     )
 
     class Meta:
-        db_table = "searcher_role"
-        verbose_name = "searcher role"
-        verbose_name_plural = "searchers role"
+        db_table = "searcher"
+        verbose_name = "searcher"
+        verbose_name_plural = "searchers"
 
     def __str__(self):
         """
@@ -296,11 +303,3 @@ class JWTBlacklist(models.Model):
         """
 
         return f"Blacklisted token for {self.token}"
-
-
-class UserRoles(Enum):
-    """
-    This enum represents the roles that a user can have.
-    """
-
-    SEARCHER = f"{SearcherRole.__name__.lower()}"
