@@ -9,7 +9,6 @@ from apps.constants import ERROR_MESSAGES
 from rest_framework import serializers
 from django.core.validators import RegexValidator
 from phonenumber_field.serializerfields import PhoneNumberField
-from typing import Dict
 
 
 class SearcherDataSerializer(ErrorMessagesSerializer):
@@ -17,15 +16,9 @@ class SearcherDataSerializer(ErrorMessagesSerializer):
     Defines the fields that are required for the searcher user profile.
     """
 
-    def __init__(
-        self, required_fields: Dict[str, bool] = None, *args, **kwargs
-    ):
+    def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.__user_repository = UserRepository
-
-        if required_fields:
-            for field, value in required_fields.items():
-                self.fields[field].required = value
 
     name = serializers.CharField(
         required=False,
@@ -136,12 +129,40 @@ class SearcherDataSerializer(ErrorMessagesSerializer):
 
 
 @SearcherUserRegisterSerializerSchema
-class SearcherRegisterSerializer(serializers.Serializer):
+class SearcherRegisterSerializer(BaseUserDataSerializer):
     """
     Defines the fields that are required for the searcher user registration.
     """
 
-    base_data = BaseUserDataSerializer()
-    role_data = SearcherDataSerializer(
-        required_fields={"name": True, "last_name": True}
+    name = serializers.CharField(
+        required=True,
+        max_length=SearcherProperties.NAME_MAX_LENGTH.value,
+        error_messages={
+            "max_length": ERROR_MESSAGES["max_length"].format(
+                max_length="{max_length}"
+            ),
+        },
+        validators=[
+            RegexValidator(
+                regex=r"^[A-Za-zñÑ\s]+$",
+                code="invalid_data",
+                message=ERROR_MESSAGES["invalid"],
+            ),
+        ],
+    )
+    last_name = serializers.CharField(
+        required=True,
+        max_length=SearcherProperties.LAST_NAME_MAX_LENGTH.value,
+        error_messages={
+            "max_length": ERROR_MESSAGES["max_length"].format(
+                max_length="{max_length}"
+            ),
+        },
+        validators=[
+            RegexValidator(
+                regex=r"^[A-Za-zñÑ\s]+$",
+                code="invalid_data",
+                message=ERROR_MESSAGES["invalid"],
+            ),
+        ],
     )

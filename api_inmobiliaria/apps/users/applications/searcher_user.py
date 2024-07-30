@@ -37,7 +37,16 @@ class SearcherUsesCases:
 
         user = self.__user_repository.create(
             role=UserRoles.SEARCHER.value,
-            data=data,
+            data={
+                "base_data": {
+                    "email": data["email"],
+                    "password": data["password"],
+                },
+                "role_data": {                
+                    "name": data["name"],
+                    "last_name": data["last_name"],
+                }
+            },
             is_active=False,
         )
 
