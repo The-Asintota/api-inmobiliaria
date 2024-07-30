@@ -17,42 +17,44 @@ paths:
     post:
       operationId: create_searcher_user
       description: |-
-        Handle POST requests for searcheruser registration.
+        Handle POST requests for searcher user registration.
 
-        This method allows the registration of a new seacher user, waiting for a POST
-        request with the registration data. A successful registration will consist of
-        saving the user's information in the database and sending a message to the
-        user's email with a link that will allow them to activate their account.
+        This method allows the registration of a new seacher user, waiting for a
+        POST request with the registration data. A successful registration will
+        consist of saving the user's information in the database and sending a
+        message to the user's email with a link that will allow them to activate
+        their account.
       tags:
       - Users
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SearcherUserRegisterRequest'
+              $ref: '#/components/schemas/SearcherRegisterRequest'
             examples:
               DataValid:
                 value:
-                  full_name: Nombre Apellido
+                  name: Nombres del usuario
+                  last_name: Apellidos del usuario
                   email: user1@email.com
                   password: contraseña1234
                   confirm_password: contraseña1234
-                summary: Register a new user with role searcheruser.
+                summary: Register a new user with role searcher.
                 description: "A valid user registration data. The following validations\
-                  \ will be applied:\n- **full_name:** This field is required, must\
-                  \ not exceed 40 characters and must contain letters and spaces.\n\
-                  - **email:** This field is required and must not exceed 40 characters,\
-                  \ must follow standard email format, and must not be in use.\n-\
-                  \ **password:** This field is required and should be between 8 and\
-                  \ 20 characters. It should not be a common password or contain only\
-                  \ numbers. \n- **confirm_password:** This field is required and\
-                  \ should match the password field."
+                  \ will be applied:\n- **name and last_name:** This field is required,\
+                  \ must not exceed 40 characters and must contain only letters and\
+                  \ spaces.\n- **email:** This field is required and must not exceed\
+                  \ 40 characters, must follow standard email format, and must not\
+                  \ be in use.\n- **password:** This field is required and should\
+                  \ be between 8 and 40 characters. It should not be a common password\
+                  \ or contain only numbers. \n- **confirm_password:** This field\
+                  \ is required and should match the password field."
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/SearcherUserRegisterRequest'
+              $ref: '#/components/schemas/SearcherRegisterRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/SearcherUserRegisterRequest'
+              $ref: '#/components/schemas/SearcherRegisterRequest'
         required: true
       responses:
         '201':
@@ -71,7 +73,13 @@ paths:
                   value:
                     code: invalid_request_data
                     detail:
-                      full_name:
+                      name:
+                      - Este campo es requerido.
+                      - Este campo no puede estar en blanco.
+                      - Este campo no puede ser nulo.
+                      - El valor ingresado es inválido.
+                      - El valor ingresado no puede tener más de 40 caracteres.
+                      last_name:
                       - Este campo es requerido.
                       - Este campo no puede estar en blanco.
                       - Este campo no puede ser nulo.
@@ -89,7 +97,7 @@ paths:
                       - Este campo no puede estar en blanco.
                       - Este campo no puede ser nulo.
                       - El valor ingresado es inválido.
-                      - El valor ingresado no puede tener más de 20 caracteres.
+                      - El valor ingresado no puede tener más de 40 caracteres.
                       - El valor ingresado debe tener al menos 8 caracteres.
                       confirm_password:
                       - Este campo es requerido.
@@ -522,7 +530,7 @@ components:
       required:
       - access
       - refresh
-    SearcherUserRegisterRequest:
+    SearcherRegisterRequest:
       type: object
       description: Defines the fields that are required for the searcher user registration.
       properties:
@@ -535,12 +543,17 @@ components:
           type: string
           writeOnly: true
           minLength: 8
-          maxLength: 20
+          maxLength: 40
         confirm_password:
           type: string
           writeOnly: true
           minLength: 1
-        full_name:
+        name:
+          type: string
+          minLength: 1
+          pattern: ^[A-Za-z\u00f1\u00d1\s]+$
+          maxLength: 40
+        last_name:
           type: string
           minLength: 1
           pattern: ^[A-Za-z\u00f1\u00d1\s]+$
@@ -548,7 +561,8 @@ components:
       required:
       - confirm_password
       - email
-      - full_name
+      - last_name
+      - name
       - password
     UpdateTokenRequest:
       type: object

@@ -30,13 +30,22 @@ SearcherUserRegisterMethodSchema = extend_schema(
                     value={
                         "code": "invalid_request_data",
                         "detail": {
-                            "full_name": [
+                            "name": [
                                 ERROR_MESSAGES["required"],
                                 ERROR_MESSAGES["blank"],
                                 ERROR_MESSAGES["null"],
                                 ERROR_MESSAGES["invalid"],
                                 ERROR_MESSAGES["max_length"].format(
                                     max_length=SearcherProperties.NAME_MAX_LENGTH.value,
+                                ),
+                            ],
+                            "last_name": [
+                                ERROR_MESSAGES["required"],
+                                ERROR_MESSAGES["blank"],
+                                ERROR_MESSAGES["null"],
+                                ERROR_MESSAGES["invalid"],
+                                ERROR_MESSAGES["max_length"].format(
+                                    max_length=SearcherProperties.LAST_NAME_MAX_LENGTH.value,
                                 ),
                             ],
                             "email": [
