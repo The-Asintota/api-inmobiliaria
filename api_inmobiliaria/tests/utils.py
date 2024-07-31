@@ -1,4 +1,8 @@
 from django.db.models import Model, QuerySet
+from faker import Faker
+
+
+fake = Faker("es_CO")
 
 
 def empty_queryset(model: Model) -> QuerySet:

@@ -1,42 +1,42 @@
-from apps.users.infrastructure.serializers import (
-    SearcherUserRegisterSerializer,
-)
-from apps.users.domain.constants import SearcherUser
+from apps.users.infrastructure.serializers import SearcherRegisterSerializer
+from apps.users.domain.constants import SearcherProperties, UserProperties
 from apps.users.models import User
 from apps.utils import ERROR_MESSAGES
-from tests.utils import empty_queryset
+from tests.utils import empty_queryset, fake
 from unittest.mock import Mock, patch
 from typing import Dict, Any
-from faker import Faker
 import pytest
 
 
-fake = Faker("es_CO")
-
-
-class TestSerializer:
+class TestRegisterSerializer:
     """
-    A class to test the `SearcherUserRegisterSerializer` class.
+    This class encapsulates the tests for the serializer in charge of validating
+    the data required for the registration of a user with the "Searcher" role.
     """
 
-    serializer_class = SearcherUserRegisterSerializer
+    serializer_class = SearcherRegisterSerializer
 
     @patch("apps.users.infrastructure.serializers.base.UserRepository")
     def test_correct_execution(self, repository: Mock) -> None:
+        """
+        This test is responsible for validating the expected behavior of the
+        serializer when the log data is valid.
+        """
+
         data = {
-            "full_name": "Nombre Apellido",
+            "name": "Nombre del usuario",
+            "last_name": "Apellido del usuario",
             "email": "user1@email.com",
             "password": "contraseña1234",
             "confirm_password": "contraseña1234",
         }
 
-        # Mocking the methods
-        get: Mock = repository.get
+        # Mocking the methods of the UserRepository class
+        # To control the behavior of serializer validations that use these methods
+        # We make it return an empty QuerySet so that validations do not fail
+        get_user_data: Mock = repository.get_user_data
+        get_user_data.return_value = empty_queryset(model=User)
 
-        # Setting the return values
-        get.return_value = empty_queryset(model=User)
-
-        # Instantiating the serializer
         serializer = self.serializer_class(data=data)
 
         # Asserting the serializer is valid and the data is correct
@@ -51,7 +51,8 @@ class TestSerializer:
             (
                 {},
                 {
-                    "full_name": [ERROR_MESSAGES["required"]],
+                    "name": [ERROR_MESSAGES["required"]],
+                    "last_name": [ERROR_MESSAGES["required"]],
                     "email": [ERROR_MESSAGES["required"]],
                     "password": [ERROR_MESSAGES["required"]],
                     "confirm_password": [ERROR_MESSAGES["required"]],
@@ -59,36 +60,44 @@ class TestSerializer:
             ),
             (
                 {
-                    "full_name": "User123",
+                    "name": "User123",
+                    "last_name": "User_@123",
                     "email": "useremail.com",
                     "password": "contraseña1234",
                     "confirm_password": "contraseña1234",
                 },
                 {
                     "email": [ERROR_MESSAGES["invalid"]],
-                    "full_name": [ERROR_MESSAGES["invalid"]],
+                    "name": [ERROR_MESSAGES["invalid"]],
+                    "last_name": [ERROR_MESSAGES["invalid"]],
                 },
             ),
             (
                 {
-                    "full_name": fake.bothify(text=f"{'?' * 41}"),
+                    "name": fake.bothify(text=f"{'?' * 41}"),
+                    "last_name": fake.bothify(text=f"{'?' * 41}"),
                     "email": f"user{fake.random_number(digits=41)}@email.com",
-                    "password": fake.password(length=21, special_chars=True),
+                    "password": fake.password(length=41, special_chars=True),
                 },
                 {
-                    "full_name": [
+                    "name": [
                         ERROR_MESSAGES["max_length"].format(
-                            max_length=SearcherUser.FULL_NAME_MAX_LENGTH.value,
+                            max_length=SearcherProperties.NAME_MAX_LENGTH.value,
+                        ),
+                    ],
+                    "last_name": [
+                        ERROR_MESSAGES["max_length"].format(
+                            max_length=SearcherProperties.LAST_NAME_MAX_LENGTH.value,
                         ),
                     ],
                     "email": [
                         ERROR_MESSAGES["max_length"].format(
-                            max_length=SearcherUser.EMAIL_MAX_LENGTH.value,
+                            max_length=UserProperties.EMAIL_MAX_LENGTH.value,
                         ),
                     ],
                     "password": [
                         ERROR_MESSAGES["max_length"].format(
-                            max_length=SearcherUser.PASSWORD_MAX_LENGTH.value,
+                            max_length=UserProperties.PASSWORD_MAX_LENGTH.value,
                         ),
                     ],
                     "confirm_password": [ERROR_MESSAGES["required"]],
@@ -96,7 +105,8 @@ class TestSerializer:
             ),
             (
                 {
-                    "full_name": "Nombre Apellido",
+                    "name": "Nombre del usuario",
+                    "last_name": "Apellido del usuario",
                     "email": "user1@email.com",
                     "password": "contraseña1234",
                     "confirm_password": "contraseña5678",
@@ -107,7 +117,8 @@ class TestSerializer:
             ),
             (
                 {
-                    "full_name": "Nombre Apellido",
+                    "name": "Nombre del usuario",
+                    "last_name": "Apellido del usuario",
                     "email": "user1@email.com",
                     "password": f"{fake.random_number(digits=10)}",
                 },
@@ -132,13 +143,18 @@ class TestSerializer:
         data: Dict[str, Dict],
         error_messages: Dict[str, Any],
     ) -> None:
-        # Mocking the methods
-        get: Mock = repository.get
+        """
+        This test is responsible for validating the expected behavior of the
+        serializer when the record data is invalid and does not exist in the
+        database.
+        """
 
-        # Setting the return values
-        get.return_value = empty_queryset(model=User)
+        # Mocking the methods of the UserRepository class
+        # To control the behavior of serializer validations that use these methods
+        # We make it return an empty QuerySet so that validations do not fail
+        get_user_data: Mock = repository.get_user_data
+        get_user_data.return_value = empty_queryset(model=User)
 
-        # Instantiating the serializer
         serializer = self.serializer_class(data=data)
 
         # Asserting the serializer is not valid and the data is correct
@@ -159,7 +175,8 @@ class TestSerializer:
         argvalues=[
             (
                 {
-                    "full_name": "Nombre Apellido",
+                    "name": "Nombre del usuario",
+                    "last_name": "Apellido del usuario",
                     "email": "user1@email.com",
                     "password": "contraseña1234",
                     "confirm_password": "contraseña1234",
@@ -179,15 +196,19 @@ class TestSerializer:
         data: Dict[str, Dict],
         error_messages: Dict[str, Any],
     ) -> None:
-        # Mocking the methods
-        get: Mock = repository.get
-        user: Mock = queryset.first
+        """
+        This test is responsible for validating the expected behavior of the
+        serializer when the record data already exists in the database.
+        """
 
-        # Setting the return values
-        get.return_value = queryset
+        # Mocking the methods of the UserRepository class
+        # To control the behavior of serializer validations that use these methods
+        # We make it return a non-empty QuerySet so that validations fail
+        get_user_data: Mock = repository.get_user_data
+        user: Mock = queryset.first
+        get_user_data.return_value = queryset
         user.return_value = User
 
-        # Instantiating the serializer
         serializer = self.serializer_class(data=data)
 
         # Asserting the serializer is not valid and the data is correct

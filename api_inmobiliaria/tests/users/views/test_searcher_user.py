@@ -1,16 +1,17 @@
-from apps.users.domain.constants import SearcherUser
-from apps.users.models import User, UserRoles
+from apps.users.domain.constants import (
+    SearcherProperties,
+    UserProperties,
+    UserRoles,
+)
+from apps.users.models import User
 from apps.exceptions import DatabaseConnectionError
 from apps.utils import ERROR_MESSAGES
+from tests.utils import fake
 from django.test import Client
 from django.urls import reverse
 from unittest.mock import Mock, patch
-from typing import Tuple, Dict
-from faker import Faker
+from typing import Callable, Tuple, Dict
 import pytest
-
-
-fake = Faker("es_CO")
 
 
 @pytest.fixture
@@ -21,36 +22,22 @@ def setUp() -> Tuple[Client, str]:
 
 class TestAPIViewPOSTMethod:
     """
-    This class groups all test cases for the POST method of the `SearcherUserAPIView`.
-    The view is responsible for managing the registration of new users with the
-    `searcheruser` role.
+    This class encapsulates the tests for the view responsible for creating a
+    user with the "Searcher" role.
     """
 
-    @staticmethod
-    def _assert_errors_nested_field(
-        key: str, value: Dict, expected_errors: Dict[str, Dict]
+    @pytest.mark.django_db
+    def test_request_valid(
+        self, setUp: Tuple[Client, str], setup_database: Callable
     ) -> None:
         """
-        This method asserts the errors of a nested field in the serializer.
-
-        #### Parameters:
-        - key: The key of the nested field.
-        - value: The errors of the nested field.
-        - expected_errors: The expected errors of the nested field.
+        This test is responsible for validating the expected behavior of the
+        view when the request data is valid.
         """
 
-        profile_data_errors_formatted = {
-            field: [str(error) for error in errors]
-            for field, errors in value.items()
-        }
-
-        for field, message in expected_errors[key].items():
-            assert profile_data_errors_formatted[field] == message
-
-    @pytest.mark.django_db
-    def test_request_valid(self, setUp: Tuple[Client, str]) -> None:
         data = {
-            "full_name": "Nombre Apellido",
+            "name": "Nombre del usuario",
+            "last_name": "Apellido del usuario",
             "email": "user1@email.com",
             "password": "contraseña1234",
             "confirm_password": "contraseña1234",
@@ -72,7 +59,8 @@ class TestAPIViewPOSTMethod:
             (
                 {},
                 {
-                    "full_name": [ERROR_MESSAGES["required"]],
+                    "name": [ERROR_MESSAGES["required"]],
+                    "last_name": [ERROR_MESSAGES["required"]],
                     "email": [ERROR_MESSAGES["required"]],
                     "password": [ERROR_MESSAGES["required"]],
                     "confirm_password": [ERROR_MESSAGES["required"]],
@@ -80,36 +68,44 @@ class TestAPIViewPOSTMethod:
             ),
             (
                 {
-                    "full_name": "User123",
+                    "name": "User123",
+                    "last_name": "User_@123",
                     "email": "useremail.com",
                     "password": "contraseña1234",
                     "confirm_password": "contraseña1234",
                 },
                 {
                     "email": [ERROR_MESSAGES["invalid"]],
-                    "full_name": [ERROR_MESSAGES["invalid"]],
+                    "name": [ERROR_MESSAGES["invalid"]],
+                    "last_name": [ERROR_MESSAGES["invalid"]],
                 },
             ),
             (
                 {
-                    "full_name": fake.bothify(text=f"{'?' * 41}"),
+                    "name": fake.bothify(text=f"{'?' * 41}"),
+                    "last_name": fake.bothify(text=f"{'?' * 41}"),
                     "email": f"user{fake.random_number(digits=41)}@email.com",
-                    "password": fake.password(length=21, special_chars=True),
+                    "password": fake.password(length=41, special_chars=True),
                 },
                 {
-                    "full_name": [
+                    "name": [
                         ERROR_MESSAGES["max_length"].format(
-                            max_length=SearcherUser.FULL_NAME_MAX_LENGTH.value,
+                            max_length=SearcherProperties.NAME_MAX_LENGTH.value,
+                        ),
+                    ],
+                    "last_name": [
+                        ERROR_MESSAGES["max_length"].format(
+                            max_length=SearcherProperties.LAST_NAME_MAX_LENGTH.value,
                         ),
                     ],
                     "email": [
                         ERROR_MESSAGES["max_length"].format(
-                            max_length=SearcherUser.EMAIL_MAX_LENGTH.value,
+                            max_length=UserProperties.EMAIL_MAX_LENGTH.value,
                         ),
                     ],
                     "password": [
                         ERROR_MESSAGES["max_length"].format(
-                            max_length=SearcherUser.PASSWORD_MAX_LENGTH.value,
+                            max_length=UserProperties.PASSWORD_MAX_LENGTH.value,
                         ),
                     ],
                     "confirm_password": [ERROR_MESSAGES["required"]],
@@ -117,7 +113,8 @@ class TestAPIViewPOSTMethod:
             ),
             (
                 {
-                    "full_name": "Nombre Apellido",
+                    "name": "Nombre del usuario",
+                    "last_name": "Apellido del usuario",
                     "email": "user1@email.com",
                     "password": "contraseña1234",
                     "confirm_password": "contraseña5678",
@@ -128,7 +125,8 @@ class TestAPIViewPOSTMethod:
             ),
             (
                 {
-                    "full_name": "Nombre Apellido",
+                    "name": "Nombre del usuario",
+                    "last_name": "Apellido del usuario",
                     "email": "user1@email.com",
                     "password": f"{fake.random_number(digits=10)}",
                 },
@@ -152,6 +150,12 @@ class TestAPIViewPOSTMethod:
         data: Dict[str, Dict],
         error_messages: Dict[str, Dict],
     ) -> None:
+        """
+        This test is responsible for validating the expected behavior of the
+        view when the request data is invalid and does not exist in the
+        database.
+        """
+
         # Simulating the request
         client, path = setUp
         response = client.post(
@@ -177,7 +181,8 @@ class TestAPIViewPOSTMethod:
         argvalues=[
             (
                 {
-                    "full_name": "Nombre Apellido",
+                    "name": "Nombre del usuario",
+                    "last_name": "Apellido del usuario",
                     "email": "user1@email.com",
                     "password": "contraseña1234",
                     "confirm_password": "contraseña1234",
@@ -195,6 +200,11 @@ class TestAPIViewPOSTMethod:
         data: Dict[str, Dict],
         error_messages: Dict[str, Dict],
     ) -> None:
+        """
+        This test is responsible for validating the expected behavior of the
+        view when the request data is invalid and exists in the database.
+        """
+
         # Creating a user
         data_copy = data.copy()
         _ = User.objects.create_user(
@@ -202,8 +212,12 @@ class TestAPIViewPOSTMethod:
                 "email": data_copy["email"],
                 "password": data_copy["password"],
             },
-            profile_data={"full_name": data_copy["full_name"]},
+            role_data={
+                "name": data_copy["name"],
+                "last_name": data_copy["last_name"],
+            },
             related_model_name=UserRoles.SEARCHER.value,
+            is_active=False,
         )
 
         # Simulating the request
@@ -229,18 +243,24 @@ class TestAPIViewPOSTMethod:
     def test_exception_raised_db(
         self, user_repository_mock: Mock, setUp: Tuple[Client, str]
     ) -> None:
-        # Mocking the methods
-        get: Mock = user_repository_mock.get
+        """
+        This test is responsible for validating the expected behavior of the
+        view when a DatabaseConnectionError exception is raised.
+        """
 
-        # Setting the return values
-        get.side_effect = DatabaseConnectionError
+        # Mocking the methods of the UserRepository class
+        # To control the behavior of serializer validations that use these methods
+        # We make it return a DatabaseConnectionError exception
+        get_user_data: Mock = user_repository_mock.get_user_data
+        get_user_data.side_effect = DatabaseConnectionError
 
         # Simulating the request
         client, path = setUp
         response = client.post(
             path=path,
             data={
-                "full_name": "Nombre Apellido",
+                "name": "Nombre del usuario",
+                "last_name": "Apellido del usuario",
                 "email": "user1@email.com",
                 "password": "contraseña1234",
                 "confirm_password": "contraseña1234",

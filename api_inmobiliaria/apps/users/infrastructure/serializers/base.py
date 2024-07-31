@@ -13,7 +13,7 @@ class BaseUserDataSerializer(ErrorMessagesSerializer):
     Defines the base data of a user.
     """
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs) ->  None:
         super().__init__(*args, **kwargs)
         self.__user_repository = UserRepository
 

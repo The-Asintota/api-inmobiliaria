@@ -42,10 +42,10 @@ class SearcherUsesCases:
                     "email": data["email"],
                     "password": data["password"],
                 },
-                "role_data": {                
+                "role_data": {
                     "name": data["name"],
                     "last_name": data["last_name"],
-                }
+                },
             },
             is_active=False,
         )

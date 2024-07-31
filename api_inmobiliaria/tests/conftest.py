@@ -1,3 +1,4 @@
+from apps.users.domain.constants import USER_ROLE_PERMISSIONS, UserRoles
 from apps.users.domain.abstractions import (
     IUserRepository,
     IJWTRepository,
@@ -6,10 +7,25 @@ from apps.users.domain.abstractions import (
 from apps.users.models import User, JWT, UserManager
 from apps.emails.utils import TokenGenerator
 from rest_framework_simplejwt.utils import datetime_from_epoch
+from django.contrib.auth.models import Group, Permission
 from django.db.models.query import QuerySet
 from typing import Callable, Tuple, Dict
 from unittest.mock import Mock
 import pytest
+
+
+@pytest.fixture
+def setup_database(db) -> None:
+    """
+    Set up data for the whole TestCase.
+    """
+
+    # Create the group and assign permissions
+    group = Group.objects.create(name=UserRoles.SEARCHER.value)
+
+    for perm_codename in USER_ROLE_PERMISSIONS[UserRoles.SEARCHER.value]:
+        perm = Permission.objects.get(codename=perm_codename)
+        group.permissions.add(perm)
 
 
 @pytest.fixture
