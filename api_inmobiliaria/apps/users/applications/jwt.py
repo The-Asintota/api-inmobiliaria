@@ -1,3 +1,4 @@
+from apps.users.domain.constants import UserRoles, USER_ROLE_PERMISSIONS
 from apps.users.domain.typing import JWToken, JWTPayload
 from apps.users.domain.abstractions import (
     IJWTRepository,
@@ -5,7 +6,7 @@ from apps.users.domain.abstractions import (
     IUserRepository,
 )
 from apps.users.models import User, JWT
-from apps.exceptions import JWTError, ResourceNotFoundError
+from apps.exceptions import JWTError, ResourceNotFoundError, PermissionDenied
 from rest_framework_simplejwt.exceptions import AuthenticationFailed
 from django.contrib.auth import authenticate
 from typing import Dict, List
@@ -23,25 +24,11 @@ class JWTUsesCases:
         jwt_repository: IJWTRepository = None,
         user_repository: IUserRepository = None,
     ) -> None:
-        """
-        Initializes the JWTUsesCases instance with the necessary dependencies.
+        self.__user_repository = user_repository
+        self.__jwt_repository = jwt_repository
+        self.__jwt_class = jwt_class
 
-        #### Parameters:
-        - jwt_class: An interface that provides an abstraction for JWT token
-        generation. This is used to create new JWT tokens for users.
-        - jwt_repository: An interface that provides an abstraction for database
-        operations related to JWT tokens. This is used to fetch, store, and manage JWT
-        tokens in the database.
-        - user_repository: An interface that provides an abstraction for database
-        operations related to users. This is used to fetch and manage user data in the
-        database.
-        """
-
-        self._user_repository = user_repository
-        self._jwt_repository = jwt_repository
-        self._jwt_class = jwt_class
-
-    def _is_token_recent(
+    def __is_token_recent(
         self,
         user: User,
         access_payload: JWTPayload,
@@ -60,7 +47,7 @@ class JWTUsesCases:
         - JWTError: If the tokens do not match the user's last tokens.
         """
 
-        latest_tokens = self._jwt_repository.get(user=user)
+        latest_tokens = self.__jwt_repository.get(user=user)
 
         if latest_tokens.count() < 2:
             raise ResourceNotFoundError(
@@ -91,6 +78,7 @@ class JWTUsesCases:
         #### Raises:
         - AuthenticationFailed: If the credentials are invalid or the user is
         inactive.
+        - PermissionDenied: If the user does not have the required permissions.
         """
 
         user = authenticate(**credentials)
@@ -105,8 +93,15 @@ class JWTUsesCases:
                 code="authentication_failed",
                 detail="Cuenta del usuario inactiva.",
             )
+        elif not user.has_perm(
+            perm=USER_ROLE_PERMISSIONS[UserRoles.SEARCHER.value]["jwt"]
+        ):
+            raise PermissionDenied(
+                code="permission_denied",
+                detail="El usuario no tiene permisos para realizar esta acción.",
+            )
 
-        access, refresh = self._jwt_class.get_token(user=user)
+        access, refresh = self.__jwt_class.get_token(user=user)
 
         return {"access": access, "refresh": refresh}
 
@@ -121,7 +116,7 @@ class JWTUsesCases:
         - ResourceNotFoundError: If the user does not exist.
         """
 
-        user = self._user_repository.get_user_data(
+        user = self.__user_repository.get_user_data(
             uuid=data["access"]["user_uuid"]
         ).first()
 
@@ -131,7 +126,7 @@ class JWTUsesCases:
                 detail="The JSON Web Token user does not exist.",
             )
 
-        tokens = self._is_token_recent(
+        tokens = self.__is_token_recent(
             access_payload=data["access"],
             refresh_payload=data["refresh"],
             user=user,
@@ -139,9 +134,9 @@ class JWTUsesCases:
 
         for token in tokens:
             if not token.is_expired():
-                self._jwt_repository.add_to_blacklist(token=token)
+                self.__jwt_repository.add_to_blacklist(token=token)
 
-        access, refresh = self._jwt_class.get_token(user=user)
+        access, refresh = self.__jwt_class.get_token(user=user)
 
         return {"access": access, "refresh": refresh}
 
@@ -156,7 +151,7 @@ class JWTUsesCases:
         - ResourceNotFoundError: If the user does not exist.
         """
 
-        user = self._user_repository.get_user_data(
+        user = self.__user_repository.get_user_data(
             uuid=data["access"]["user_uuid"]
         ).first()
 
@@ -174,4 +169,4 @@ class JWTUsesCases:
 
         for token in tokens:
             if not token.is_expired():
-                self._jwt_repository.add_to_blacklist(token=token)
+                self.__jwt_repository.add_to_blacklist(token=token)

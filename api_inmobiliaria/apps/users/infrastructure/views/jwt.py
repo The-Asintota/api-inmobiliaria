@@ -31,7 +31,7 @@ class AuthenticationAPIView(TokenObtainPairView):
     serializer_class = AuthenticationSerializer
     application_class = JWTUsesCases
 
-    def _handle_valid_request(self, data: Dict[str, Any]) -> Response:
+    def __handle_valid_request(self, data: Dict[str, Any]) -> Response:
         tokens = self.application_class(
             jwt_class=TokenObtainPairSerializer,
         ).authenticate_user(credentials=data)
@@ -43,7 +43,7 @@ class AuthenticationAPIView(TokenObtainPairView):
         )
 
     @staticmethod
-    def _handle_invalid_request(errors: List[Dict[str, List]]) -> Response:
+    def __handle_invalid_request(errors: List[Dict[str, List]]) -> Response:
 
         return Response(
             data={
@@ -59,18 +59,18 @@ class AuthenticationAPIView(TokenObtainPairView):
         """
         Handle POST requests for user authentication.
 
-        This method allows authentication of a user, waits for a POST request with
-        their credentials. Successful authentication will consist of creating the
-        user's JSON Web Tokens if their credentials are valid and their account is
-        active.
+        This method allows for the authentication of a user, it expects a POST request
+        with their credentials. Successful authentication will result in the creation
+        of the user's JSON Web Tokens if their credentials are valid, their account is
+        active, and they have the necessary permissions to perform this action.
         """
 
         serializer = self.serializer_class(data=request.data)
 
         if serializer.is_valid():
-            return self._handle_valid_request(data=serializer.validated_data)
+            return self.__handle_valid_request(data=serializer.validated_data)
 
-        return self._handle_invalid_request(errors=serializer.errors)
+        return self.__handle_invalid_request(errors=serializer.errors)
 
 
 class UpdateTokenAPIView(generics.GenericAPIView):

@@ -5,6 +5,7 @@ from apps.users.infrastructure.schemas.jwt import (
 )
 from apps.users.infrastructure.db import JWTRepository
 from apps.users.domain.typing import AccessToken, RefreshToken
+from apps.users.domain.constants import UserProperties
 from apps.users.models import User
 from apps.utils import ErrorMessagesSerializer, decode_jwt
 from rest_framework_simplejwt.serializers import (
@@ -23,8 +24,12 @@ class AuthenticationSerializer(ErrorMessagesSerializer):
     password meet the necessary requirements.
     """
 
-    email = serializers.CharField(required=True)
-    password = serializers.CharField(required=True)
+    email = serializers.CharField(
+        required=True, max_length=UserProperties.EMAIL_MAX_LENGTH
+    )
+    password = serializers.CharField(
+        required=True, max_length=UserProperties.PASSWORD_MAX_LENGTH
+    )
 
 
 class TokenObtainPairSerializer(BaseTokenSerializer):

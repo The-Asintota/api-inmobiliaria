@@ -14,18 +14,18 @@ urlpatterns = [
         name="searcher_user",
     ),
     path(
-        route="token/login/",
+        route="jwt/login/",
         view=AuthenticationAPIView.as_view(),
-        name="authenticate_user",
+        name="jwt_authenticate_user",
     ),
     path(
-        route="token/update/",
+        route="jwt/update/",
         view=UpdateTokenAPIView.as_view(),
-        name="update_tokens",
+        name="update_jwt",
     ),
     path(
-        route="token/logout/",
+        route="jwt/logout/",
         view=LogoutAPIView.as_view(),
-        name="logout_user",
+        name="jwt_logout_user",
     ),
 ]

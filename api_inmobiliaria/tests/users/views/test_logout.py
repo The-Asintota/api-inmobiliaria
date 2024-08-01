@@ -12,7 +12,7 @@ import pytest
 @pytest.fixture
 def setUp() -> Tuple[Client, str]:
 
-    return Client(), reverse(viewname="logout_user")
+    return Client(), reverse(viewname="jwt_logout_user")
 
 
 class TestAPIView:

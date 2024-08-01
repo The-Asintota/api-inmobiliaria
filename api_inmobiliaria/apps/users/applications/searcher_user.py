@@ -15,14 +15,6 @@ class SearcherUsesCases:
     __signal = user_registered
 
     def __init__(self, user_repository: IUserRepository) -> None:
-        """ "
-        Initializes the use cases.
-
-        #### Parameters:
-        - user_repository: An interface that provides an abstraction of database
-        operations related to a user.
-        """
-
         self.__user_repository = user_repository
 
     def create_user(self, data: Dict[str, Any], request: Request) -> None:

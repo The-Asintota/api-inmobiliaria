@@ -12,7 +12,7 @@ import pytest
 @pytest.fixture
 def setUp() -> Tuple[Client, str]:
 
-    return Client(), reverse(viewname="update_tokens")
+    return Client(), reverse(viewname="update_jwt")
 
 
 class TestAPIView:
