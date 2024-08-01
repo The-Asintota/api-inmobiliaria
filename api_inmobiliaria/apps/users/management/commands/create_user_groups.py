@@ -11,7 +11,7 @@ class Command(BaseCommand):
 
     help = "Create user groups and assign permissions"
 
-    def _define_group(self, name: str) -> Group:
+    def __define_group(self, name: str) -> Group:
         """
         Define a group with the given name.
         """
@@ -29,7 +29,9 @@ class Command(BaseCommand):
 
         return group
 
-    def _assign_permissions(self, permissions: List[str], group: Group) -> None:
+    def __assign_permissions(
+        self, permissions: List[str], group: Group
+    ) -> None:
         """
         Assign permissions to the given group.
         """
@@ -66,9 +68,10 @@ class Command(BaseCommand):
         )
 
         for role in user_roles:
-            group = self._define_group(name=role)
-            self._assign_permissions(
-                permissions=USER_ROLE_PERMISSIONS.get(role), group=group
+            group = self.__define_group(name=role)
+            self.__assign_permissions(
+                permissions=USER_ROLE_PERMISSIONS[role]["perm_codename_list"],
+                group=group,
             )
 
             self.stdout.write(

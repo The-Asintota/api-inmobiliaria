@@ -23,7 +23,9 @@ def setup_database(db) -> None:
     # Create the group and assign permissions
     group = Group.objects.create(name=UserRoles.SEARCHER.value)
 
-    for perm_codename in USER_ROLE_PERMISSIONS[UserRoles.SEARCHER.value]:
+    for perm_codename in USER_ROLE_PERMISSIONS[UserRoles.SEARCHER.value][
+        "perm_codename_list"
+    ]:
         perm = Permission.objects.get(codename=perm_codename)
         group.permissions.add(perm)
 

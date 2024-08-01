@@ -56,8 +56,10 @@ class TestCreateSearcherUser:
         user.save()
 
         # Asserting that the user has the correct permissions
-        for permission in USER_ROLE_PERMISSIONS[UserRoles.SEARCHER.value]:
-            perm = Permission.objects.get(codename=permission)
+        for codename in USER_ROLE_PERMISSIONS[UserRoles.SEARCHER.value][
+            "perm_codename_list"
+        ]:
+            perm = Permission.objects.get(codename=codename)
             assert user.has_perm(
                 perm=f"{perm.content_type.app_label}.{perm.codename}"
             )

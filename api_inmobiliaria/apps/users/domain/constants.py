@@ -15,12 +15,18 @@ class UserRoles(Enum):
 
 
 USER_ROLE_PERMISSIONS = {
-    UserRoles.SEARCHER.value: [
-        f"change_{UserRoles.SEARCHER.value}",
-        f"delete_{UserRoles.SEARCHER.value}",
-        f"view_{UserRoles.SEARCHER.value}",
-        "add_jwt",
-    ],
+    UserRoles.SEARCHER.value: {
+        "perm_codename_list": [
+            f"change_{UserRoles.SEARCHER.value}",
+            f"delete_{UserRoles.SEARCHER.value}",
+            f"view_{UserRoles.SEARCHER.value}",
+            "add_jwt",
+        ],
+        "jwt": "users.add_jwt",
+        "change_data": f"users.change_{UserRoles.SEARCHER.value}",
+        "delete_data": f"users.delete_{UserRoles.SEARCHER.value}",
+        "view_data": f"users.view_{UserRoles.SEARCHER.value}",
+    },
 }
 
 
