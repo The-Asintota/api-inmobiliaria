@@ -25,10 +25,10 @@ class AuthenticationSerializer(ErrorMessagesSerializer):
     """
 
     email = serializers.CharField(
-        required=True, max_length=UserProperties.EMAIL_MAX_LENGTH
+        required=True, max_length=UserProperties.EMAIL_MAX_LENGTH.value
     )
     password = serializers.CharField(
-        required=True, max_length=UserProperties.PASSWORD_MAX_LENGTH
+        required=True, max_length=UserProperties.PASSWORD_MAX_LENGTH.value
     )
 
 

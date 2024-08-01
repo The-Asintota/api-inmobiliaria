@@ -96,10 +96,7 @@ class JWTUsesCases:
         elif not user.has_perm(
             perm=USER_ROLE_PERMISSIONS[UserRoles.SEARCHER.value]["jwt"]
         ):
-            raise PermissionDenied(
-                code="permission_denied",
-                detail="El usuario no tiene permisos para realizar esta acción.",
-            )
+            raise PermissionDenied()
 
         access, refresh = self.__jwt_class.get_token(user=user)
 

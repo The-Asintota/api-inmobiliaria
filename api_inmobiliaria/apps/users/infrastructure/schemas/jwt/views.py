@@ -1,3 +1,4 @@
+from apps.users.domain.constants import UserProperties
 from apps.utils import ERROR_MESSAGES
 from rest_framework.fields import CharField
 from drf_spectacular.utils import (
@@ -7,11 +8,12 @@ from drf_spectacular.utils import (
 )
 
 
+# This constant is used when the serializer error messages are the default.
 DEFAULT_ERROR_MESSAGES = CharField().error_messages
 
 
 AuthenticationSchema = extend_schema(
-    operation_id="authenticate_user",
+    operation_id="jwt_authenticate_user",
     tags=["Users"],
     responses={
         200: OpenApiResponse(
@@ -54,11 +56,17 @@ AuthenticationSchema = extend_schema(
                                 ERROR_MESSAGES["required"],
                                 ERROR_MESSAGES["blank"],
                                 ERROR_MESSAGES["null"],
+                                ERROR_MESSAGES["max_length"].format(
+                                    max_length=UserProperties.EMAIL_MAX_LENGTH.value,
+                                ),
                             ],
                             "password": [
                                 ERROR_MESSAGES["required"],
                                 ERROR_MESSAGES["blank"],
                                 ERROR_MESSAGES["null"],
+                                ERROR_MESSAGES["max_length"].format(
+                                    max_length=UserProperties.PASSWORD_MAX_LENGTH.value,
+                                ),
                             ],
                         },
                     },
@@ -90,6 +98,26 @@ AuthenticationSchema = extend_schema(
                     value={
                         "code": "authentication_failed",
                         "detail": "Cuenta del usuario inactiva.",
+                    },
+                ),
+            ],
+        ),
+        403: OpenApiResponse(
+            description="**(FORBIDDEN)** The user trying to authenticate does not have the permissions to do so with JSON Web Token.",
+            response={
+                "properties": {
+                    "code": {"type": "string"},
+                    "detail": {"type": "string"},
+                }
+            },
+            examples=[
+                OpenApiExample(
+                    name="permission_denied",
+                    summary="Permission denied",
+                    description="This response appears when the user trying to authenticate does not have the permissions to do so with JSON Web Token.",
+                    value={
+                        "code": "permission_denied",
+                        "detail": "The user does not have permissions to perform this action.",
                     },
                 ),
             ],

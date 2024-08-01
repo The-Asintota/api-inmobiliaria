@@ -13,130 +13,16 @@ info:
     name: MIT License
     url: https://opensource.org/licenses/MIT
 paths:
-  /api/v1/user/searcher/:
+  /api/v1/user/jwt/login/:
     post:
-      operationId: create_searcher_user
-      description: |-
-        Handle POST requests for searcher user registration.
-
-        This method allows the registration of a new seacher user, waiting for a
-        POST request with the registration data. A successful registration will
-        consist of saving the user's information in the database and sending a
-        message to the user's email with a link that will allow them to activate
-        their account.
-      tags:
-      - Users
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SearcherRegisterRequest'
-            examples:
-              DataValid:
-                value:
-                  name: Nombres del usuario
-                  last_name: Apellidos del usuario
-                  email: user1@email.com
-                  password: contraseña1234
-                  confirm_password: contraseña1234
-                summary: Register a new user with role searcher.
-                description: "A valid user registration data. The following validations\
-                  \ will be applied:\n- **name and last_name:** This field is required,\
-                  \ must not exceed 40 characters and must contain only letters and\
-                  \ spaces.\n- **email:** This field is required and must not exceed\
-                  \ 40 characters, must follow standard email format, and must not\
-                  \ be in use.\n- **password:** This field is required and should\
-                  \ be between 8 and 40 characters. It should not be a common password\
-                  \ or contain only numbers. \n- **confirm_password:** This field\
-                  \ is required and should match the password field."
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/SearcherRegisterRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/SearcherRegisterRequest'
-        required: true
-      responses:
-        '201':
-          description: '**(CREATED)** User created correctly.'
-        '400':
-          content:
-            application/json:
-              schema:
-                properties:
-                  code:
-                    type: string
-                  detail:
-                    type: object
-              examples:
-                InvalidData:
-                  value:
-                    code: invalid_request_data
-                    detail:
-                      name:
-                      - Este campo es requerido.
-                      - Este campo no puede estar en blanco.
-                      - Este campo no puede ser nulo.
-                      - El valor ingresado es inválido.
-                      - El valor ingresado no puede tener más de 40 caracteres.
-                      last_name:
-                      - Este campo es requerido.
-                      - Este campo no puede estar en blanco.
-                      - Este campo no puede ser nulo.
-                      - El valor ingresado es inválido.
-                      - El valor ingresado no puede tener más de 40 caracteres.
-                      email:
-                      - Este campo es requerido.
-                      - Este campo no puede estar en blanco.
-                      - Este campo no puede ser nulo.
-                      - El valor ingresado es inválido.
-                      - El valor ingresado no puede tener más de 40 caracteres.
-                      - Este correo electrónico ya está en uso.
-                      password:
-                      - Este campo es requerido.
-                      - Este campo no puede estar en blanco.
-                      - Este campo no puede ser nulo.
-                      - El valor ingresado es inválido.
-                      - El valor ingresado no puede tener más de 40 caracteres.
-                      - El valor ingresado debe tener al menos 8 caracteres.
-                      confirm_password:
-                      - Este campo es requerido.
-                      - Este campo no puede estar en blanco.
-                      - Este campo no puede ser nulo.
-                      - La contraseña debe contener al menos una mayuscula o una minuscula.
-                      - Esta contraseña es demasiado común.
-                      - Las contraseñas no coinciden.
-                  summary: Invalid data
-                  description: These are the possible error messages for each field.
-          description: '**(BAD_REQUEST)** The request data is invalid, error messages
-            are returned for each field that did not pass validations.'
-        '500':
-          content:
-            application/json:
-              schema:
-                properties:
-                  detail:
-                    type: string
-                  code:
-                    type: string
-              examples:
-                DatabaseConnectionError:
-                  value:
-                    code: database_connection_error
-                    detail: Unable to establish a connection with the database. Please
-                      try again later.
-                  summary: Database connection error
-          description: '**(INTERNAL_SERVER_ERROR)** An unexpected error occurred.'
-  /api/v1/user/token/login/:
-    post:
-      operationId: authenticate_user
+      operationId: jwt_authenticate_user
       description: |-
         Handle POST requests for user authentication.
 
-        This method allows authentication of a user, waits for a POST request with
-        their credentials. Successful authentication will consist of creating the
-        user's JSON Web Tokens if their credentials are valid and their account is
-        active.
+        This method allows for the authentication of a user, it expects a POST request
+        with their credentials. Successful authentication will result in the creation
+        of the user's JSON Web Tokens if their credentials are valid, their account is
+        active, and they have the necessary permissions to perform this action.
       tags:
       - Users
       requestBody:
@@ -202,10 +88,12 @@ paths:
                       - Este campo es requerido.
                       - Este campo no puede estar en blanco.
                       - Este campo no puede ser nulo.
+                      - El valor ingresado no puede tener más de 40 caracteres.
                       password:
                       - Este campo es requerido.
                       - Este campo no puede estar en blanco.
                       - Este campo no puede ser nulo.
+                      - El valor ingresado no puede tener más de 40 caracteres.
                   summary: Invalid data
                   description: These are the possible error messages for each field.
           description: '**(BAD_REQUEST)** The request data are invalid, error message(s)
@@ -236,6 +124,25 @@ paths:
             **(UNAUTHORIZED)** The user you are trying to authenticate is not authorized, this is due to some of the following reasons.
             - Invalid credentials.
             - The user's account has not been activated.
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  code:
+                    type: string
+                  detail:
+                    type: string
+              examples:
+                PermissionDenied:
+                  value:
+                    code: permission_denied
+                    detail: El usuario no tiene permisos para realizar esta acción.
+                  summary: Permission denied
+                  description: This response appears when the user trying to authenticate
+                    does not have the permissions to do so with JSON Web Token.
+          description: '**(FORBIDDEN)** The user trying to authenticate does not have
+            the permissions to do so with JSON Web Token.'
         '500':
           content:
             application/json:
@@ -254,7 +161,7 @@ paths:
                   summary: Database connection error
                   description: The connection to the database could not be established.
           description: '**(INTERNAL_SERVER_ERROR)** An unexpected error occurred.'
-  /api/v1/user/token/logout/:
+  /api/v1/user/jwt/logout/:
     post:
       operationId: logout_user
       description: |-
@@ -353,7 +260,7 @@ paths:
                   summary: Database connection error
                   description: The connection to the database could not be established.
           description: '**(INTERNAL_SERVER_ERROR)** An unexpected error occurred.'
-  /api/v1/user/token/update/:
+  /api/v1/user/jwt/update/:
     post:
       operationId: update_tokens
       description: |-
@@ -500,6 +407,120 @@ paths:
                   summary: Database connection error
                   description: The connection to the database could not be established.
           description: '**(INTERNAL_SERVER_ERROR)** An unexpected error occurred.'
+  /api/v1/user/searcher/:
+    post:
+      operationId: create_searcher_user
+      description: |-
+        Handle POST requests for searcher user registration.
+
+        This method allows the registration of a new seacher user, waiting for a
+        POST request with the registration data. A successful registration will
+        consist of saving the user's information in the database and sending a
+        message to the user's email with a link that will allow them to activate
+        their account.
+      tags:
+      - Users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearcherRegisterRequest'
+            examples:
+              DataValid:
+                value:
+                  name: Nombres del usuario
+                  last_name: Apellidos del usuario
+                  email: user1@email.com
+                  password: contraseña1234
+                  confirm_password: contraseña1234
+                summary: Register a new user with role searcher.
+                description: "A valid user registration data. The following validations\
+                  \ will be applied:\n- **name and last_name:** This field is required,\
+                  \ must not exceed 40 characters and must contain only letters and\
+                  \ spaces.\n- **email:** This field is required and must not exceed\
+                  \ 40 characters, must follow standard email format, and must not\
+                  \ be in use.\n- **password:** This field is required and should\
+                  \ be between 8 and 40 characters. It should not be a common password\
+                  \ or contain only numbers. \n- **confirm_password:** This field\
+                  \ is required and should match the password field."
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SearcherRegisterRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SearcherRegisterRequest'
+        required: true
+      responses:
+        '201':
+          description: '**(CREATED)** User created correctly.'
+        '400':
+          content:
+            application/json:
+              schema:
+                properties:
+                  code:
+                    type: string
+                  detail:
+                    type: object
+              examples:
+                InvalidData:
+                  value:
+                    code: invalid_request_data
+                    detail:
+                      name:
+                      - Este campo es requerido.
+                      - Este campo no puede estar en blanco.
+                      - Este campo no puede ser nulo.
+                      - El valor ingresado es inválido.
+                      - El valor ingresado no puede tener más de 40 caracteres.
+                      last_name:
+                      - Este campo es requerido.
+                      - Este campo no puede estar en blanco.
+                      - Este campo no puede ser nulo.
+                      - El valor ingresado es inválido.
+                      - El valor ingresado no puede tener más de 40 caracteres.
+                      email:
+                      - Este campo es requerido.
+                      - Este campo no puede estar en blanco.
+                      - Este campo no puede ser nulo.
+                      - El valor ingresado es inválido.
+                      - El valor ingresado no puede tener más de 40 caracteres.
+                      - Este correo electrónico ya está en uso.
+                      password:
+                      - Este campo es requerido.
+                      - Este campo no puede estar en blanco.
+                      - Este campo no puede ser nulo.
+                      - El valor ingresado es inválido.
+                      - El valor ingresado no puede tener más de 40 caracteres.
+                      - El valor ingresado debe tener al menos 8 caracteres.
+                      confirm_password:
+                      - Este campo es requerido.
+                      - Este campo no puede estar en blanco.
+                      - Este campo no puede ser nulo.
+                      - La contraseña debe contener al menos una mayuscula o una minuscula.
+                      - Esta contraseña es demasiado común.
+                      - Las contraseñas no coinciden.
+                  summary: Invalid data
+                  description: These are the possible error messages for each field.
+          description: '**(BAD_REQUEST)** The request data is invalid, error messages
+            are returned for each field that did not pass validations.'
+        '500':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                  code:
+                    type: string
+              examples:
+                DatabaseConnectionError:
+                  value:
+                    code: database_connection_error
+                    detail: Unable to establish a connection with the database. Please
+                      try again later.
+                  summary: Database connection error
+          description: '**(INTERNAL_SERVER_ERROR)** An unexpected error occurred.'
 components:
   schemas:
     AuthenticationRequest:
@@ -511,9 +532,11 @@ components:
         email:
           type: string
           minLength: 1
+          maxLength: 40
         password:
           type: string
           minLength: 1
+          maxLength: 40
       required:
       - email
       - password
