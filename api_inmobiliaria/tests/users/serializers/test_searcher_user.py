@@ -4,7 +4,7 @@ from apps.users.models import User
 from apps.utils import ERROR_MESSAGES
 from tests.utils import empty_queryset, fake
 from unittest.mock import Mock, patch
-from typing import Dict, Any
+from typing import Dict, List
 import pytest
 
 
@@ -140,8 +140,8 @@ class TestRegisterSerializer:
     def test_failed_execution(
         self,
         repository: Mock,
-        data: Dict[str, Dict],
-        error_messages: Dict[str, Any],
+        data: Dict[str, str],
+        error_messages: Dict[str, List],
     ) -> None:
         """
         This test is responsible for validating the expected behavior of the
@@ -193,8 +193,8 @@ class TestRegisterSerializer:
         self,
         repository: Mock,
         queryset: Mock,
-        data: Dict[str, Dict],
-        error_messages: Dict[str, Any],
+        data: Dict[str, str],
+        error_messages: Dict[str, List],
     ) -> None:
         """
         This test is responsible for validating the expected behavior of the

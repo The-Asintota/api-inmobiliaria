@@ -7,7 +7,7 @@ from apps.users.infrastructure.db import JWTRepository
 from apps.users.domain.typing import AccessToken, RefreshToken
 from apps.users.domain.constants import UserProperties
 from apps.users.models import User
-from apps.utils import ErrorMessagesSerializer, decode_jwt
+from apps.utils import ErrorMessagesSerializer, decode_jwt, ERROR_MESSAGES
 from rest_framework_simplejwt.serializers import (
     TokenObtainPairSerializer as BaseTokenSerializer,
 )
@@ -25,10 +25,22 @@ class AuthenticationSerializer(ErrorMessagesSerializer):
     """
 
     email = serializers.CharField(
-        required=True, max_length=UserProperties.EMAIL_MAX_LENGTH.value
+        required=True,
+        max_length=UserProperties.EMAIL_MAX_LENGTH.value,
+        error_messages={
+            "max_length": ERROR_MESSAGES["max_length"].format(
+                max_length="{max_length}"
+            ),
+        },
     )
     password = serializers.CharField(
-        required=True, max_length=UserProperties.PASSWORD_MAX_LENGTH.value
+        required=True,
+        max_length=UserProperties.PASSWORD_MAX_LENGTH.value,
+        error_messages={
+            "max_length": ERROR_MESSAGES["max_length"].format(
+                max_length="{max_length}"
+            ),
+        },
     )
 
 

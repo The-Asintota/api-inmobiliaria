@@ -27,7 +27,7 @@ class MethodHTTPMapped:
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
-        
+
         if not generics.GenericAPIView in cls.__bases__:
             raise TypeError(
                 f"The {cls.__name__} class must inherit from generics.GenericAPIView. Make sure your view definition includes GenericAPIView as a base class when using the MethodHTTPMapped class."
@@ -86,7 +86,7 @@ class MethodHTTPMapped:
         return self.status_code_mapping[self.request.method]
 
     def permission_denied(
-        self, request: Request, message: str = None, code:str = None
+        self, request: Request, message: str = None, code: str = None
     ) -> None:
         """
         If request is not permitted, determine what kind of exception to raise.

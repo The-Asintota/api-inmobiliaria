@@ -2,33 +2,43 @@ from apps.users.infrastructure.serializers import (
     TokenObtainPairSerializer,
 )
 from apps.users.applications import JWTUsesCases
-from apps.users.models import JWT, JWTBlacklist, UserRoles
-from apps.exceptions import DatabaseConnectionError
+from apps.users.domain.constants import UserRoles
+from apps.users.models import JWT, JWTBlacklist, User
+from apps.exceptions import DatabaseConnectionError, PermissionDenied
 from apps.utils import decode_jwt
 from rest_framework_simplejwt.exceptions import AuthenticationFailed
 from unittest.mock import Mock, patch
+from typing import Callable, Tuple, Dict
 import pytest
 
 
 class TestApplication:
     """
-    A test class for the `JWTUsesCases` application. This class contains test methods
-    to verify the behavior of use cases for authenticating a user.
+    This class encapsulates all the tests for the use case in charge of authenticating
+    users with JSON Web Token.
     """
 
     application_class = JWTUsesCases
 
     @pytest.mark.django_db
-    def test_authenticated_user(self, save_user_db) -> None:
-        # Creating a user
-        _, data = save_user_db(active=True, role=UserRoles.SEARCHER.value)
+    def test_authenticated_user(
+        self,
+        create_user: Callable[[bool, str, bool], Tuple[User, Dict[str, Dict]]],
+        setup_database: Callable,
+    ) -> None:
+        """
+        This test is responsible for validating the expected behavior of the
+        `authenticate_user` method when the user data is valid.
+        """
 
-        # Instantiating the application and calling the method
+        # Creating a user
+        _, data = create_user(
+            active=True, role=UserRoles.SEARCHER.value, add_perm=True
+        )
+
         tokens = self.application_class(
             jwt_class=TokenObtainPairSerializer,
-        ).authenticate_user(
-            credentials={"email": data["email"], "password": data["password"]}
-        )
+        ).authenticate_user(credentials=data["base_data"])
 
         # Asserting that the tokens were generated
         access = tokens.get("access", False)
@@ -69,14 +79,16 @@ class TestApplication:
         assert refresh_payload["role"] == UserRoles.SEARCHER.value
 
     @pytest.mark.django_db
-    def test_if_credentials_invalid(self, jwt_class: Mock) -> None:
-        # Mocking the methods
-        get_token: Mock = jwt_class.get_token
+    def test_if_credentials_invalid(self) -> None:
+        """
+        This test is responsible for validating the expected behavior of the
+        `authenticate_user` method when the user data is invalid.
+        """
 
         # Instantiating the application and calling the method
         with pytest.raises(AuthenticationFailed):
             _ = self.application_class(
-                jwt_class=jwt_class,
+                jwt_class=TokenObtainPairSerializer,
             ).authenticate_user(
                 credentials={
                     "email": "user1@email.com",
@@ -88,47 +100,73 @@ class TestApplication:
         assert JWT.objects.count() == 0
         assert JWTBlacklist.objects.count() == 0
 
-        # Asserting that the methods were not called
-        get_token.assert_not_called()
-
     @pytest.mark.django_db
     def test_if_inactive_user_account(
-        self, jwt_class: Mock, save_user_db
+        self,
+        create_user: Callable[[bool, str, bool], Tuple[User, Dict[str, Dict]]],
     ) -> None:
-        # Creating a user
-        _, data = save_user_db(active=False, role=UserRoles.SEARCHER.value)
+        """
+        This test is responsible for validating the expected behavior of the
+        `authenticate_user` method when the user account is inactive.
+        """
 
-        # Mocking the methods
-        get_token: Mock = jwt_class.get_token
+        # Creating a user
+        _, data = create_user(
+            active=False, role=UserRoles.SEARCHER.value, add_perm=False
+        )
 
         # Instantiating the application and calling the method
         with pytest.raises(AuthenticationFailed):
             _ = self.application_class(
-                jwt_class=jwt_class,
-            ).authenticate_user(
-                credentials={
-                    "email": data["email"],
-                    "password": data["password"],
-                }
-            )
+                jwt_class=TokenObtainPairSerializer,
+            ).authenticate_user(credentials=data["base_data"])
 
         # Asserting that the user does not exist in the database
         assert JWT.objects.count() == 0
         assert JWTBlacklist.objects.count() == 0
 
-        # Asserting that the methods were not called
-        get_token.assert_not_called()
+    @pytest.mark.django_db
+    def test_if_user_has_not_permission(
+        self,
+        create_user: Callable[[bool, str, bool], Tuple[User, Dict[str, Dict]]],
+        setup_database: Callable,
+    ) -> None:
+        """
+        This test is responsible for validating the expected behavior of the
+        `authenticate_user` method when the user account is inactive.
+        """
 
-    @patch("apps.users.backend.UserRepository")
+        # Creating a user
+        _, data = create_user(
+            active=True, role=UserRoles.SEARCHER.value, add_perm=False
+        )
+
+        # Instantiating the application and calling the method
+        with pytest.raises(PermissionDenied):
+            _ = self.application_class(
+                jwt_class=TokenObtainPairSerializer,
+            ).authenticate_user(credentials=data["base_data"])
+
+        # Asserting that the user does not exist in the database
+        assert JWT.objects.count() == 0
+        assert JWTBlacklist.objects.count() == 0
+
+    @patch("apps.backend.UserRepository")
     def test_exception_raised_db(
         self, user_repository_mock: Mock, jwt_class: Mock
     ) -> None:
+        """
+        This test is responsible for validating the expected behavior of the
+        `authenticate_user` method when an exception is raised during the
+        interaction with the database.
+        """
+
         # Mocking the methods
-        get: Mock = user_repository_mock.get
+        get_user_data: Mock = user_repository_mock.get_user_data
         get_token: Mock = jwt_class.get_token
 
         # Setting the return values
-        get.side_effect = DatabaseConnectionError
+        get_user_data.side_effect = DatabaseConnectionError
 
         # Instantiating the application and calling the method
         with pytest.raises(DatabaseConnectionError):
