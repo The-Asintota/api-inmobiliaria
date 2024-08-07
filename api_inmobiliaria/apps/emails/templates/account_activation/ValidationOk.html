@@ -12,14 +12,16 @@
 <body>
     <main class="content">
         <section class="content__message">
-            <div class="message__text">
-                <h1>🎉 Correo electrónico confirmado 🎉</h1>
-                <p>¡Felicidades! Has confirmado correctamente tu dirección de correo electrónico. Ahora puedes iniciar sesión y disfrutar plenamente de nuestra plataforma. Comienza a explorar y encuentra tu próximo inmueble con facilidad y confianza.</p>
+            <div class="message">
+                <div class="message__text">
+                    <h1>🎉 Correo electrónico confirmado 🎉</h1>
+                    <p>¡Felicidades! Has confirmado correctamente tu dirección de correo electrónico. Ahora puedes iniciar sesión y disfrutar plenamente de nuestra plataforma. Comienza a explorar y encuentra tu próximo inmueble con facilidad y confianza.</p>
+                </div>
+                <img 
+                    class="message__img"
+                    src="{% static "images/account_activation/KeyHouse.png" %}"
+                >
             </div>
-            <img 
-                class="message__img"
-                src="{% static "images/account_activation/KeyHouse.png" %}"
-            >
             <a 
                 class="content__button"
                 role="button" href="{{ redirect.url|escape }}"

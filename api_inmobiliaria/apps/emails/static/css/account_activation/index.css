@@ -14,9 +14,9 @@ body {
 .content {
     display: flex;
     flex-direction: column;
+    align-content: center;
     flex-wrap: wrap;
-    flex-basis: 750px;
-    padding: 25px;
+    width: 100vw;
     gap: 40px;
 
     font-family: 'Lato', sans-serif;
@@ -25,8 +25,14 @@ body {
 .content__message {
     display: flex;
     flex-wrap: wrap;
-    justify-content: space-evenly;
-    gap: 30px;
+    width: 40%;
+    min-width: 580px;
+    gap: 60px;
+}
+
+.message {
+    display: flex;
+    gap: 40px;
 }
 
 .message__text {
@@ -34,8 +40,7 @@ body {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    flex-basis: 450px;
-    gap: 20px;
+    gap: 30px;
 }
 
 .message__text h1 {
@@ -43,7 +48,7 @@ body {
     justify-content: center;
     align-items: center;
 
-    font-size: 22px;
+    font-size: 21px;
     font-weight: 600;
     line-height: 30px;
 }
@@ -64,6 +69,7 @@ body {
     align-items: center;
     width: 180px;
     height: 180px;
+    transform: scale(0.9)
 }
 
 .content__message a[role="button"] {
@@ -86,5 +92,67 @@ body {
     &:hover {
         background-color: #caa820;
         cursor: pointer;
+    }
+}
+
+
+/* Estilos para móviles */
+@media screen and (min-width: 0) and (max-width: 480px) and (orientation: portrait) {
+
+    .content {
+        align-items: center;
+    }
+
+    .message {
+        flex-direction: column;
+        align-items: center;
+    }    
+
+    .content__message {
+        flex-direction: column;
+        align-items: center;
+        width: 87%;
+        min-width: 0;
+        transform: scale(0.9)
+    }
+}
+
+
+/* Estilos para móviles con la pantalla horizontal */
+@media screen and (min-width: 480px) and (max-width: 960px) and (orientation: landscape) {
+
+    .content {
+        align-items: center;
+    }
+
+    .content__message {
+        flex-direction: column;
+        align-items: center;
+        width: 70%;
+        transform: scale(0.9)
+    }
+
+    .message {
+        gap: 30px;
+    }
+
+    .message__text {
+        transform: scale(0.9)
+    }
+
+    .message img {
+        transform: scale(0.8)
+    }
+}
+
+
+/* Estilos para tablets */
+@media screen and (min-width: 480px) and (max-width: 960px) and (orientation: portrait) {
+
+    .content__message {
+        flex-direction: column;
+        align-items: center;
+        width: 70%;
+        transform: scale(0.9)
     }
 }
