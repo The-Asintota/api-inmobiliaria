@@ -19,7 +19,7 @@ class ITokenRepository(Protocol):
         - token: Token to be inserted.
 
         #### Raises:
-        - DatabaseConnectionError: If there is an operational error with the database.
+        - DatabaseConnectionAPIError: If there is an operational error with the database.
         """
 
         ...
@@ -33,7 +33,7 @@ class ITokenRepository(Protocol):
         - filters: Keyword arguments that define the filters to apply.
 
         #### Raises:
-        - DatabaseConnectionError: If there is an operational error with the database.
+        - DatabaseConnectionAPIError: If there is an operational error with the database.
         """
 
         ...

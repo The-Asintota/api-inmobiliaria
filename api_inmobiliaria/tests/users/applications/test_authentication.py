@@ -4,9 +4,12 @@ from apps.users.infrastructure.serializers import (
 from apps.users.applications import JWTUsesCases
 from apps.users.domain.constants import UserRoles
 from apps.users.models import JWT, JWTBlacklist, User
-from apps.exceptions import DatabaseConnectionError, PermissionDenied
+from apps.api_exceptions import (
+    DatabaseConnectionAPIError,
+    PermissionDeniedAPIError,
+    AuthenticationFailedAPIError,
+)
 from apps.utils import decode_jwt
-from rest_framework_simplejwt.exceptions import AuthenticationFailed
 from unittest.mock import Mock, patch
 from typing import Callable, Tuple, Dict
 import pytest
@@ -86,7 +89,7 @@ class TestApplication:
         """
 
         # Instantiating the application and calling the method
-        with pytest.raises(AuthenticationFailed):
+        with pytest.raises(AuthenticationFailedAPIError):
             _ = self.application_class(
                 jwt_class=TokenObtainPairSerializer,
             ).authenticate_user(
@@ -116,7 +119,7 @@ class TestApplication:
         )
 
         # Instantiating the application and calling the method
-        with pytest.raises(AuthenticationFailed):
+        with pytest.raises(AuthenticationFailedAPIError):
             _ = self.application_class(
                 jwt_class=TokenObtainPairSerializer,
             ).authenticate_user(credentials=data["base_data"])
@@ -142,7 +145,7 @@ class TestApplication:
         )
 
         # Instantiating the application and calling the method
-        with pytest.raises(PermissionDenied):
+        with pytest.raises(PermissionDeniedAPIError):
             _ = self.application_class(
                 jwt_class=TokenObtainPairSerializer,
             ).authenticate_user(credentials=data["base_data"])
@@ -166,10 +169,10 @@ class TestApplication:
         get_token: Mock = jwt_class.get_token
 
         # Setting the return values
-        get_user_data.side_effect = DatabaseConnectionError
+        get_user_data.side_effect = DatabaseConnectionAPIError
 
         # Instantiating the application and calling the method
-        with pytest.raises(DatabaseConnectionError):
+        with pytest.raises(DatabaseConnectionAPIError):
             _ = self.application_class(
                 jwt_class=jwt_class,
             ).authenticate_user(

@@ -10,11 +10,12 @@ from apps.users.applications import SearcherUsesCases
 from rest_framework.serializers import Serializer
 from rest_framework.response import Response
 from rest_framework.request import Request
-from rest_framework import status, generics
+from rest_framework.generics import GenericAPIView
+from rest_framework import status
 from typing import Dict, Any, List
 
 
-class SearcherUserAPIView(MethodHTTPMapped, generics.GenericAPIView):
+class SearcherUserAPIView(MethodHTTPMapped, GenericAPIView):
     """
     API view for managing operations for users with `searcher role`.
 

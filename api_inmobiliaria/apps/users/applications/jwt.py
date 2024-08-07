@@ -6,8 +6,12 @@ from apps.users.domain.abstractions import (
     IUserRepository,
 )
 from apps.users.models import User, JWT
-from apps.exceptions import JWTError, ResourceNotFoundError, PermissionDenied
-from rest_framework_simplejwt.exceptions import AuthenticationFailed
+from apps.api_exceptions import (
+    JWTAPIError,
+    ResourceNotFoundAPIError,
+    PermissionDeniedAPIError,
+    AuthenticationFailedAPIError,
+)
 from django.contrib.auth import authenticate
 from typing import Dict, List
 from enum import Enum
@@ -58,14 +62,14 @@ class JWTUsesCases:
         - user: An instance of the User model.
 
         #### Raises:
-        - ResourceNotFoundError: If the tokens do not exist.
-        - JWTError: If the tokens do not match the user's last tokens.
+        - ResourceNotFoundAPIError: If the tokens do not exist.
+        - JWTAPIError: If the tokens do not match the user's last tokens.
         """
 
         latest_tokens = self.__jwt_repository.get(user=user)
 
         if latest_tokens.count() < 2:
-            raise ResourceNotFoundError(
+            raise ResourceNotFoundAPIError(
                 code=JWTErrorMessages.TOKEN_NOT_FOUND_CODE.value,
                 detail=JWTErrorMessages.TOKEN_NOT_FOUND.value,
             )
@@ -74,7 +78,7 @@ class JWTUsesCases:
         token_jtis = {token.jti for token in latest_tokens}
 
         if not payload_jtis.issubset(token_jtis):
-            raise JWTError(
+            raise JWTAPIError(
                 detail=JWTErrorMessages.JWT_ERROR.value,
             )
 
@@ -91,25 +95,25 @@ class JWTUsesCases:
         - credentials: A dictionary containing the user's credentials.
 
         #### Raises:
-        - AuthenticationFailed: If the credentials are invalid or the user is
+        - AuthenticationFailedAPIError: If the credentials are invalid or the user is
         inactive.
-        - PermissionDenied: If the user does not have the required permissions.
+        - PermissionDeniedAPIError: If the user does not have the required permissions.
         """
 
         user = authenticate(**credentials)
 
         if not user:
-            raise AuthenticationFailed(
+            raise AuthenticationFailedAPIError(
                 detail=JWTErrorMessages.AUTHENTICATION_FAILED.value,
             )
         elif not user.is_active:
-            raise AuthenticationFailed(
+            raise AuthenticationFailedAPIError(
                 detail=JWTErrorMessages.INACTIVE_ACCOUNT.value,
             )
         elif not user.has_perm(
             perm=USER_ROLE_PERMISSIONS[UserRoles.SEARCHER.value]["jwt"]
         ):
-            raise PermissionDenied()
+            raise PermissionDeniedAPIError()
 
         access, refresh = self.__jwt_class.get_token(user=user)
 
@@ -125,7 +129,7 @@ class JWTUsesCases:
         - data: A dictionary containing the access and refresh token payloads.
 
         #### Raises:
-        - ResourceNotFoundError: If the user does not exist.
+        - ResourceNotFoundAPIError: If the user does not exist.
         """
 
         user = self.__user_repository.get_user_data(
@@ -135,7 +139,7 @@ class JWTUsesCases:
         ).first()
 
         if not user:
-            raise ResourceNotFoundError(
+            raise ResourceNotFoundAPIError(
                 code=JWTErrorMessages.USER_NOT_FOUND_CODE.value,
                 detail=JWTErrorMessages.USER_NOT_FOUND.value,
             )
@@ -162,7 +166,7 @@ class JWTUsesCases:
         - data: A dictionary containing the access and refresh token payloads.
 
         #### Raises:
-        - ResourceNotFoundError: If the user does not exist.
+        - ResourceNotFoundAPIError: If the user does not exist.
         """
 
         user = self.__user_repository.get_user_data(
@@ -172,7 +176,7 @@ class JWTUsesCases:
         ).first()
 
         if not user:
-            raise ResourceNotFoundError(
+            raise ResourceNotFoundAPIError(
                 code=JWTErrorMessages.USER_NOT_FOUND_CODE.value,
                 detail=JWTErrorMessages.USER_NOT_FOUND.value,
             )

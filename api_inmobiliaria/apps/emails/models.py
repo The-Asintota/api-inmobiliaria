@@ -1,6 +1,5 @@
 from django.db import models
 from django.utils import timezone
-from uuid import uuid4
 
 
 class Token(models.Model):
@@ -10,7 +9,7 @@ class Token(models.Model):
     validity of the processes initiated.
     """
 
-    uuid = models.UUIDField(db_column="uuid", default=uuid4, primary_key=True)
+    id = models.BigAutoField(db_column="id", primary_key=True)
     token = models.CharField(
         db_column="token",
         max_length=255,

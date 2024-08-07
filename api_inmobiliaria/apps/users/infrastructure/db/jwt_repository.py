@@ -1,6 +1,6 @@
 from apps.users.domain.typing import JSONWebToken, JWTPayload
 from apps.users.models import User, JWT, JWTBlacklist
-from apps.exceptions import DatabaseConnectionError
+from apps.api_exceptions import DatabaseConnectionAPIError
 from rest_framework_simplejwt.utils import datetime_from_epoch
 from django.db.models import QuerySet
 from django.db import OperationalError
@@ -25,7 +25,7 @@ class JWTRepository:
         - filters: Keyword arguments that define the filters to apply.
 
         #### Raises:
-        - DatabaseConnectionError: If there is an operational error with the database.
+        - DatabaseConnectionAPIError: If there is an operational error with the database.
         """
 
         try:
@@ -38,7 +38,7 @@ class JWTRepository:
         except OperationalError:
             # In the future, a retry system will be implemented when the database is
             # suddenly unavailable.
-            raise DatabaseConnectionError()
+            raise DatabaseConnectionAPIError()
 
         return tokens
 
@@ -58,7 +58,7 @@ class JWTRepository:
         - user: An instance of the User model.
 
         #### Raises:
-        - DatabaseConnectionError: If there is an operational error with the database.
+        - DatabaseConnectionAPIError: If there is an operational error with the database.
         """
 
         try:
@@ -71,7 +71,7 @@ class JWTRepository:
         except OperationalError:
             # In the future, a retry system will be implemented when the database is
             # suddenly unavailable.
-            raise DatabaseConnectionError()
+            raise DatabaseConnectionAPIError()
 
     @classmethod
     def add_to_blacklist(cls, token: JWT) -> None:
@@ -85,7 +85,7 @@ class JWTRepository:
         - token: An instance of the `JWT` model.
 
         #### Raises:
-        - DatabaseConnectionError: If there is an operational error with the database.
+        - DatabaseConnectionAPIError: If there is an operational error with the database.
         """
 
         try:
@@ -93,4 +93,4 @@ class JWTRepository:
         except OperationalError:
             # In the future, a retry system will be implemented when the database is
             # suddenly unavailable.
-            raise DatabaseConnectionError()
+            raise DatabaseConnectionAPIError()

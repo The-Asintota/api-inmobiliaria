@@ -5,9 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@100;200;300;400;500;600;700;800;900" rel="stylesheet" type="text/css">
-    <link rel="stylesheet" href={% static "css/account_activation/index.css" %}>
-    <link rel="stylesheet" href={% static "css/account_activation/modal.css" %}>
-    <link rel="icon" href={% static "images/favicon.ico" %}>
+    <link rel="stylesheet" href="{% static "css/account_activation/index.css" %}">
+    <link rel="stylesheet" href="{% static "css/account_activation/modal.css" %}">
+    <link rel="icon" href="{% static "images/favicon.ico" %}">
     <title>Ups... Algo salio mal</title>
 </head>
 <body>
@@ -26,14 +26,17 @@
                 <h1>Ha ocurrido un error</h1>
                 <p>{{ message }}</p>
             </div>
-            <img class="message__img" src={% static "images/account_activation/HouseFront.png" %}>
-            {% if redirect.url %}
-                <a href={{ redirect.url }} role="button">{{ redirect.action }}</a>
+            <img 
+                class="message__img"
+                src="{% static "images/account_activation/HouseFront.png" %}"
+            >
+            {% if redirect.action != "Solicitar nuevo enlace" %}
+                <a href="{{ redirect.url|escape }}" role="button">{{ redirect.action }}</a>
             {% else %}
                 <a 
                     class="requestNewLink"
                     role="button"
-                    data-endpoint={% url 'send_account_activation_email' user_uuid=user_uuid %}
+                    data-endpoint="{{ redirect.url|escape }}"
                 >
                     {{ redirect.action }}
                 </a>

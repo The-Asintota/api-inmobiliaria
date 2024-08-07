@@ -3,10 +3,10 @@ from apps.users.infrastructure.db import JWTRepository, UserRepository
 from apps.users.applications import JWTUsesCases
 from apps.users.domain.constants import UserRoles
 from apps.users.models import User, JWT, JWTBlacklist
-from apps.exceptions import (
-    DatabaseConnectionError,
-    ResourceNotFoundError,
-    JWTError,
+from apps.api_exceptions import (
+    DatabaseConnectionAPIError,
+    ResourceNotFoundAPIError,
+    JWTAPIError,
 )
 from apps.utils import decode_jwt
 from tests.factory import JWTFactory
@@ -127,7 +127,7 @@ class TestApplication:
         access_data = JWTFactory.access(user_uuid=user.uuid.__str__(), exp=True)
 
         # Instantiating the application
-        with pytest.raises(ResourceNotFoundError):
+        with pytest.raises(ResourceNotFoundAPIError):
             _ = self.application_class(
                 user_repository=UserRepository,
                 jwt_repository=JWTRepository,
@@ -170,7 +170,7 @@ class TestApplication:
         _ = save_jwt_db(user=user, data=refresh_data)
 
         # Instantiating the application
-        with pytest.raises(JWTError):
+        with pytest.raises(JWTAPIError):
             _ = self.application_class(
                 user_repository=UserRepository,
                 jwt_repository=JWTRepository,
@@ -211,7 +211,7 @@ class TestApplication:
         get_user_data.return_value = empty_queryset(model=User)
 
         # Instantiating the application
-        with pytest.raises(ResourceNotFoundError):
+        with pytest.raises(ResourceNotFoundAPIError):
             _ = self.application_class(
                 user_repository=user_repository,
                 jwt_repository=jwt_repository,
@@ -245,10 +245,10 @@ class TestApplication:
         get_token: Mock = jwt_class.get_token
 
         # Setting the return values
-        get_user_data.side_effect = DatabaseConnectionError
+        get_user_data.side_effect = DatabaseConnectionAPIError
 
         # Instantiating the application
-        with pytest.raises(DatabaseConnectionError):
+        with pytest.raises(DatabaseConnectionAPIError):
             _ = self.application_class(
                 user_repository=user_repository,
                 jwt_class=jwt_class,

@@ -1,8 +1,11 @@
 from apps.users.applications.jwt import JWTErrorMessages
 from apps.users.domain.constants import UserRoles
 from apps.users.models import User
-from apps.exceptions import DatabaseConnectionError, PermissionDenied
-from rest_framework_simplejwt.exceptions import AuthenticationFailed
+from apps.api_exceptions import (
+    DatabaseConnectionAPIError,
+    PermissionDeniedAPIError,
+    AuthenticationFailedAPIError,
+)
 from django.test import Client
 from django.urls import reverse
 from unittest.mock import Mock, patch
@@ -71,8 +74,10 @@ class TestAPIView:
         )
 
         # Asserting that response data is correct
-        assert response.status_code == AuthenticationFailed.status_code
-        assert AuthenticationFailed.default_code == response.data["code"]
+        assert response.status_code == AuthenticationFailedAPIError.status_code
+        assert (
+            AuthenticationFailedAPIError.default_code == response.data["code"]
+        )
         assert (
             JWTErrorMessages.AUTHENTICATION_FAILED.value
             == response.data["detail"]
@@ -103,8 +108,10 @@ class TestAPIView:
         )
 
         # Asserting that response data is correct
-        assert response.status_code == AuthenticationFailed.status_code
-        assert AuthenticationFailed.default_code == response.data["code"]
+        assert response.status_code == AuthenticationFailedAPIError.status_code
+        assert (
+            AuthenticationFailedAPIError.default_code == response.data["code"]
+        )
         assert (
             JWTErrorMessages.INACTIVE_ACCOUNT.value == response.data["detail"]
         )
@@ -134,9 +141,11 @@ class TestAPIView:
         )
 
         # Asserting that response data is correct
-        assert response.status_code == PermissionDenied.status_code
-        assert PermissionDenied.default_code in response.data["code"]
-        assert PermissionDenied.default_detail == response.data["detail"]
+        assert response.status_code == PermissionDeniedAPIError.status_code
+        assert PermissionDeniedAPIError.default_code in response.data["code"]
+        assert (
+            PermissionDeniedAPIError.default_detail == response.data["detail"]
+        )
 
     @patch("apps.backend.UserRepository")
     def test_exception_raised_db(
@@ -150,7 +159,7 @@ class TestAPIView:
         get_user_data: Mock = user_repository_mock.get_user_data
 
         # Setting the return values
-        get_user_data.side_effect = DatabaseConnectionError
+        get_user_data.side_effect = DatabaseConnectionAPIError
 
         # Simulating the request
         client, path = setUp
@@ -161,6 +170,8 @@ class TestAPIView:
         )
 
         # Asserting that response data is correct
-        assert response.status_code == DatabaseConnectionError.status_code
-        assert DatabaseConnectionError.default_code in response.data["code"]
-        assert DatabaseConnectionError.default_detail == response.data["detail"]
+        assert response.status_code == DatabaseConnectionAPIError.status_code
+        assert DatabaseConnectionAPIError.default_code in response.data["code"]
+        assert (
+            DatabaseConnectionAPIError.default_detail == response.data["detail"]
+        )

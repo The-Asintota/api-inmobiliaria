@@ -5,8 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Lato:wght@100;200;300;400;500;600;700;800;900" rel="stylesheet" type="text/css">
-    <link rel="stylesheet" href={% static "css/account_activation/index.css" %}>
-    <link rel="icon" href={% static "img/favicon.ico" %}>
+    <link rel="stylesheet" href="{% static "css/account_activation/index.css" %}">
+    <link rel="icon" href="{% static "img/favicon.ico" %}">
     <title>¡Bienvenido!</title>
 </head>
 <body>
@@ -16,10 +16,17 @@
                 <h1>🎉 Correo electrónico confirmado 🎉</h1>
                 <p>¡Felicidades! Has confirmado correctamente tu dirección de correo electrónico. Ahora puedes iniciar sesión y disfrutar plenamente de nuestra plataforma. Comienza a explorar y encuentra tu próximo inmueble con facilidad y confianza.</p>
             </div>
-            <img class="message__img" src={% static "images/account_activation/KeyHouse.png" %}>
-            <a class="content__button" role="button" href={{ redirect.url }}>{{ redirect.action }}</a>
-        </section>
-        
+            <img 
+                class="message__img"
+                src="{% static "images/account_activation/KeyHouse.png" %}"
+            >
+            <a 
+                class="content__button"
+                role="button" href="{{ redirect.url|escape }}"
+            >
+                {{ redirect.action }}
+            </a>
+        </section>  
     </main>
 </body>
 </html>

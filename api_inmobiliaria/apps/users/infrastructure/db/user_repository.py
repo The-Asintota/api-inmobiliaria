@@ -1,5 +1,5 @@
 from apps.users.models import User, UserManager
-from apps.exceptions import DatabaseConnectionError
+from apps.api_exceptions import DatabaseConnectionAPIError
 from django.contrib.contenttypes.models import ContentType
 from django.db import OperationalError
 from django.db.models import QuerySet, Model
@@ -25,7 +25,7 @@ class UserRepository:
         - is_active: Boolean that indicates if the user is active or not.
 
         #### Raises:
-        - DatabaseConnectionError: If there is an operational error with the
+        - DatabaseConnectionAPIError: If there is an operational error with the
         database.
         """
 
@@ -41,7 +41,7 @@ class UserRepository:
         except OperationalError:
             # In the future, a retry system will be implemented when the database is
             # suddenly unavailable.
-            raise DatabaseConnectionError()
+            raise DatabaseConnectionAPIError()
 
         return user
 
@@ -54,7 +54,7 @@ class UserRepository:
         - filters: Keyword arguments that define the filters to apply.
 
         #### Raises:
-        - DatabaseConnectionError: If there is an operational error with the
+        - DatabaseConnectionAPIError: If there is an operational error with the
         database.
         """
 
@@ -73,7 +73,7 @@ class UserRepository:
         except OperationalError:
             # In the future, a retry system will be implemented when the database is
             # suddenly unavailable.
-            raise DatabaseConnectionError()
+            raise DatabaseConnectionAPIError()
 
         return user_list
 
@@ -91,7 +91,7 @@ class UserRepository:
         - filters: Keyword arguments that define the filters to apply.
 
         #### Raises:
-        - DatabaseConnectionError: If there is an operational error with the
+        - DatabaseConnectionAPIError: If there is an operational error with the
         database.
         - ValueError: If the 'user' or 'role' parameter is not provided.
         """
@@ -109,6 +109,6 @@ class UserRepository:
         except OperationalError:
             # In the future, a retry system will be implemented when the database is
             # suddenly unavailable.
-            raise DatabaseConnectionError()
+            raise DatabaseConnectionAPIError()
 
         return related_data

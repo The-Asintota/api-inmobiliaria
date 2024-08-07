@@ -2,10 +2,10 @@ from apps.users.infrastructure.serializers import JWTSerializerErrorMessages
 from apps.users.applications import JWTErrorMessages
 from apps.users.domain.constants import UserRoles
 from apps.users.models import User, JWT
-from apps.exceptions import (
-    DatabaseConnectionError,
-    ResourceNotFoundError,
-    JWTError,
+from apps.api_exceptions import (
+    DatabaseConnectionAPIError,
+    ResourceNotFoundAPIError,
+    JWTAPIError,
 )
 from tests.factory import JWTFactory
 from tests.utils import empty_queryset
@@ -183,7 +183,7 @@ class TestAPIView:
         )
 
         # Asserting that response data is correct
-        assert response.status_code == ResourceNotFoundError.status_code
+        assert response.status_code == ResourceNotFoundAPIError.status_code
         assert (
             response.data["code"] == JWTErrorMessages.TOKEN_NOT_FOUND_CODE.value
         )
@@ -233,8 +233,8 @@ class TestAPIView:
         )
 
         # Asserting that response data is correct
-        assert response.status_code == JWTError.status_code
-        assert response.data["code"] == JWTError.default_code
+        assert response.status_code == JWTAPIError.status_code
+        assert response.data["code"] == JWTAPIError.default_code
         assert response.data["detail"] == JWTErrorMessages.JWT_ERROR.value
 
     @patch("apps.users.infrastructure.views.jwt.UserRepository")
@@ -265,7 +265,7 @@ class TestAPIView:
         )
 
         # Asserting that response data is correct
-        assert response.status_code == ResourceNotFoundError.status_code
+        assert response.status_code == ResourceNotFoundAPIError.status_code
         assert (
             response.data["code"] == JWTErrorMessages.USER_NOT_FOUND_CODE.value
         )
@@ -283,7 +283,7 @@ class TestAPIView:
         get_user_data: Mock = user_repository_mock.get_user_data
 
         # Setting the return values
-        get_user_data.side_effect = DatabaseConnectionError
+        get_user_data.side_effect = DatabaseConnectionAPIError
 
         # Simulating the request
         client, path = setUp
@@ -296,6 +296,8 @@ class TestAPIView:
         )
 
         # Asserting that response data is correct
-        assert response.status_code == DatabaseConnectionError.status_code
-        assert response.data["code"] == DatabaseConnectionError.default_code
-        assert response.data["detail"] == DatabaseConnectionError.default_detail
+        assert response.status_code == DatabaseConnectionAPIError.status_code
+        assert response.data["code"] == DatabaseConnectionAPIError.default_code
+        assert (
+            response.data["detail"] == DatabaseConnectionAPIError.default_detail
+        )

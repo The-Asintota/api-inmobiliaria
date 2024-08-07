@@ -1,4 +1,7 @@
-from apps.exceptions import NotAuthenticated, PermissionDenied
+from apps.api_exceptions import (
+    NotAuthenticatedAPIError,
+    PermissionDeniedAPIError,
+)
 from rest_framework.serializers import Serializer
 from rest_framework.request import Request
 from rest_framework import permissions, generics
@@ -98,8 +101,8 @@ class MethodHTTPMapped:
         """
 
         if request.authenticators and not request.successful_authenticator:
-            raise NotAuthenticated(code=code, detail=message)
-        raise PermissionDenied(code=code, detail=message)
+            raise NotAuthenticatedAPIError(code=code, detail=message)
+        raise PermissionDeniedAPIError(code=code, detail=message)
 
     def check_permissions(self, request: Request) -> None:
         """

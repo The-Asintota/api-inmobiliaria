@@ -1,16 +1,16 @@
 from django.urls import path
-from .views import AccountActivationTokenView, AccountActivationMessageAPIView
+from .views import AccountActivationView, AccountActivationEmailAPIView
 
 
 urlpatterns = [
     path(
-        route="account/activation/<str:user_uuidb64>/<str:token>/",
-        view=AccountActivationTokenView.as_view(),
-        name="account_activation_token",
+        route="token/activation/<str:user_uuidb64>/<str:token>/",
+        view=AccountActivationView.as_view(),
+        name="account_activation",
     ),
     path(
-        route="send/account/activation/<str:user_uuid>/",
-        view=AccountActivationMessageAPIView.as_view(),
-        name="send_account_activation_email",
+        route="send/activation/<str:user_uuid>/",
+        view=AccountActivationEmailAPIView.as_view(),
+        name="account_activation_email",
     ),
 ]

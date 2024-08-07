@@ -6,7 +6,7 @@ from django.contrib.sites.shortcuts import get_current_site
 from apps.emails.applications import AccountActivation
 from apps.emails.domain.constants import SubjectsMail
 from apps.emails.paths import TEMPLATES
-from apps.emails.exceptions import AccountActivationError
+from apps.emails.exceptions import AccountActivationAPIError
 from apps.users.models import User
 from unittest.mock import Mock
 from uuid import uuid4
@@ -90,7 +90,7 @@ class TestApplicationSendMail:
         send: Mock = smtp_class_instance.send
 
         # Instantiating the application and calling the method
-        with pytest.raises(AccountActivationError):
+        with pytest.raises(AccountActivationAPIError):
             self.application_class(
                 token_class=token_generator, smtp_class=smtp_class
             ).send_email(user=user, request=request)

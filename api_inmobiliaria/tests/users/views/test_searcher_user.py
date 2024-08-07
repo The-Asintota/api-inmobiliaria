@@ -4,7 +4,7 @@ from apps.users.domain.constants import (
     UserRoles,
 )
 from apps.users.models import User
-from apps.exceptions import DatabaseConnectionError
+from apps.api_exceptions import DatabaseConnectionAPIError
 from apps.utils import ERROR_MESSAGES
 from tests.utils import fake
 from django.test import Client
@@ -243,14 +243,14 @@ class TestAPIViewPOSTMethod:
     ) -> None:
         """
         This test is responsible for validating the expected behavior of the
-        view when a DatabaseConnectionError exception is raised.
+        view when a DatabaseConnectionAPIError exception is raised.
         """
 
         # Mocking the methods of the UserRepository class
         # To control the behavior of serializer validations that use these methods
-        # We make it return a DatabaseConnectionError exception
+        # We make it return a DatabaseConnectionAPIErrorror exception
         get_user_data: Mock = user_repository_mock.get_user_data
-        get_user_data.side_effect = DatabaseConnectionError
+        get_user_data.side_effect = DatabaseConnectionAPIError
 
         # Simulating the request
         client, path = setUp
@@ -267,6 +267,8 @@ class TestAPIViewPOSTMethod:
         )
 
         # Asserting that response data is correct
-        assert response.status_code == DatabaseConnectionError.status_code
-        assert response.data["code"] == DatabaseConnectionError.default_code
-        assert response.data["detail"] == DatabaseConnectionError.default_detail
+        assert response.status_code == DatabaseConnectionAPIError.status_code
+        assert response.data["code"] == DatabaseConnectionAPIError.default_code
+        assert (
+            response.data["detail"] == DatabaseConnectionAPIError.default_detail
+        )

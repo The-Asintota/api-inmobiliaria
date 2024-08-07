@@ -3,7 +3,7 @@ from apps.users.applications import SearcherUsesCases
 from apps.users.domain.constants import USER_ROLE_PERMISSIONS, UserRoles
 from apps.users.models import User, Searcher
 from apps.emails.domain.constants import SubjectsMail
-from apps.exceptions import DatabaseConnectionError
+from apps.api_exceptions import DatabaseConnectionAPIError
 from django.contrib.auth.models import Permission
 from django.test import RequestFactory
 from django.core import mail
@@ -73,16 +73,16 @@ class TestCreateSearcherUser:
     def test_exception_raised_db(self, user_repository: Mock) -> None:
         """
         This test is responsible for validating the expected behavior of the
-        `create_user` method when a DatabaseConnectionError exception is raised
+        `create_user` method when a DatabaseConnectionAPIError exception is raised
         during the user creation process.
         """
 
         # Mocking the methods of the UserRepository class
         create: Mock = user_repository.create
-        create.side_effect = DatabaseConnectionError
+        create.side_effect = DatabaseConnectionAPIError
 
         # Instantiating the application and calling the method
-        with pytest.raises(DatabaseConnectionError):
+        with pytest.raises(DatabaseConnectionAPIError):
             self.application_class(user_repository=user_repository).create_user(
                 data={
                     "name": "Nombre del usuario",

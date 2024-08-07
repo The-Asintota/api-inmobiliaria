@@ -1,8 +1,8 @@
 from apps.emails.domain.typing import Token
 from apps.emails import models
-from apps.exceptions import DatabaseConnectionError
+from apps.api_exceptions import DatabaseConnectionAPIError
 from django.db import OperationalError
-from django.db.models import Q, QuerySet
+from django.db.models import QuerySet
 
 
 class TokenRepository:
@@ -11,20 +11,7 @@ class TokenRepository:
     or queries related to a token.
     """
 
-    model = models.Token
-
-    @staticmethod
-    def _create_query(**filters) -> Q:
-        """
-        This method creates a query object based on the provided filters.
-        """
-
-        query = Q()
-
-        for field, value in filters.items():
-            query &= Q(**{field: value})
-
-        return query
+    __model = models.Token
 
     @classmethod
     def create(cls, token: Token) -> None:
@@ -35,13 +22,13 @@ class TokenRepository:
         - token: Token to be inserted.
 
         #### Raises:
-        - DatabaseConnectionError: If there is an operational error with the database.
+        - DatabaseConnectionAPIError: If there is an operational error with the database.
         """
 
         try:
-            cls.model.objects.create(token=token)
+            cls.__model.objects.create(token=token)
         except OperationalError:
-            raise DatabaseConnectionError()
+            raise DatabaseConnectionAPIError()
 
     @classmethod
     def get(cls, **filters) -> QuerySet[models.Token]:
@@ -52,14 +39,12 @@ class TokenRepository:
         - filters: Keyword arguments that define the filters to apply.
 
         #### Raises:
-        - DatabaseConnectionError: If there is an operational error with the database.
+        - DatabaseConnectionAPIError: If there is an operational error with the database.
         """
 
         try:
-            tokens = cls.model.objects.defer("date_joined").filter(
-                cls._create_query(**filters)
-            )
+            tokens = cls.__model.objects.defer("date_joined").filter(**filters)
         except OperationalError:
-            raise DatabaseConnectionError()
+            raise DatabaseConnectionAPIError()
 
         return tokens

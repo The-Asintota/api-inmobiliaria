@@ -8,7 +8,7 @@ from apps.users.domain.typing import AccessToken, RefreshToken
 from apps.users.domain.constants import UserProperties
 from apps.users.models import User
 from apps.utils import ErrorMessagesSerializer, decode_jwt, ERROR_MESSAGES
-from apps.exceptions import JWTError
+from apps.api_exceptions import JWTAPIError
 from rest_framework_simplejwt.serializers import (
     TokenObtainPairSerializer as BaseTokenSerializer,
 )
@@ -110,12 +110,12 @@ class BaseUpdateLogoutSerializer(serializers.Serializer):
                 self.refresh_payload = decode_jwt(token=value)
         except ExpiredSignatureError:
             raise serializers.ValidationError(
-                code=JWTError.default_code,
+                code=JWTAPIError.default_code,
                 detail=JWTSerializerErrorMessages.REFRESH_EXPIRED.value,
             )
         except DecodeError:
             raise serializers.ValidationError(
-                code=JWTError.default_code,
+                code=JWTAPIError.default_code,
                 detail=JWTSerializerErrorMessages.REFRESH_INVALID.value,
             )
 
@@ -135,7 +135,7 @@ class BaseUpdateLogoutSerializer(serializers.Serializer):
             != self.access_payload["user_uuid"]
         ):
             raise serializers.ValidationError(
-                code=JWTError.default_code,
+                code=JWTAPIError.default_code,
                 detail={
                     "access": [
                         JWTSerializerErrorMessages.USER_NOT_MATCH.value,
@@ -168,12 +168,12 @@ class UpdateTokenSerializer(BaseUpdateLogoutSerializer):
             return self.access_payload
         except DecodeError:
             raise serializers.ValidationError(
-                code=JWTError.default_code,
+                code=JWTAPIError.default_code,
                 detail=JWTSerializerErrorMessages.ACCESS_INVALID.value,
             )
 
         raise serializers.ValidationError(
-            code=JWTError.default_code,
+            code=JWTAPIError.default_code,
             detail=JWTSerializerErrorMessages.ACCESS_NOT_EXPIRED.value,
         )
 
@@ -196,7 +196,7 @@ class LogoutSerializer(BaseUpdateLogoutSerializer):
                 )
         except DecodeError:
             raise serializers.ValidationError(
-                code=JWTError.default_code,
+                code=JWTAPIError.default_code,
                 detail=JWTSerializerErrorMessages.ACCESS_INVALID.value,
             )
 

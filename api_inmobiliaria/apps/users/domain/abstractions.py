@@ -20,7 +20,7 @@ class IUserRepository(Protocol):
         - is_active: Boolean that indicates if the user is active or not.
 
         #### Raises:
-        - DatabaseConnectionError: If there is an operational error with the
+        - DatabaseConnectionAPIError: If there is an operational error with the
         database.
         """
 
@@ -35,7 +35,7 @@ class IUserRepository(Protocol):
         - filters: Keyword arguments that define the filters to apply.
 
         #### Raises:
-        - DatabaseConnectionError: If there is an operational error with the
+        - DatabaseConnectionAPIError: If there is an operational error with the
         database.
         """
 
@@ -55,7 +55,7 @@ class IUserRepository(Protocol):
         - filters: Keyword arguments that define the filters to apply.
 
         #### Raises:
-        - DatabaseConnectionError: If there is an operational error with the
+        - DatabaseConnectionAPIError: If there is an operational error with the
         database.
         - ValueError: If the 'user' or 'role' parameter is not provided.
         """
@@ -78,7 +78,7 @@ class IJWTRepository(Protocol):
         - filters: Keyword arguments that define the filters to apply.
 
         #### Raises:
-        - DatabaseConnectionError: If there is an operational error with the database.
+        - DatabaseConnectionAPIError: If there is an operational error with the database.
         """
 
         ...
@@ -96,7 +96,7 @@ class IJWTRepository(Protocol):
         - user: An instance of the User model.
 
         #### Raises:
-        - DatabaseConnectionError: If there is an operational error with the database.
+        - DatabaseConnectionAPIError: If there is an operational error with the database.
         """
 
         ...
@@ -113,7 +113,7 @@ class IJWTRepository(Protocol):
         - token: An instance of the `JWT` model.
 
         #### Raises:
-        - DatabaseConnectionError: If there is an operational error with the database.
+        - DatabaseConnectionAPIError: If there is an operational error with the database.
         """
 
         ...

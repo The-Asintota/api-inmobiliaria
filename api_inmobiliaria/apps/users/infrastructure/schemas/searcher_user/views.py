@@ -1,5 +1,5 @@
 from apps.users.domain.constants import SearcherProperties, UserProperties
-from apps.exceptions import DatabaseConnectionError
+from apps.api_exceptions import DatabaseConnectionAPIError
 from apps.utils import ERROR_MESSAGES
 from drf_spectacular.utils import (
     extend_schema,
@@ -102,8 +102,8 @@ SearcherUserRegisterMethodSchema = extend_schema(
                     summary="Database connection error",
                     description="The connection to the database could not be established.",
                     value={
-                        "code": DatabaseConnectionError.default_code,
-                        "detail": DatabaseConnectionError.default_detail,
+                        "code": DatabaseConnectionAPIError.default_code,
+                        "detail": DatabaseConnectionAPIError.default_detail,
                     },
                 ),
             ],

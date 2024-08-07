@@ -2,10 +2,10 @@ from apps.users.infrastructure.db import JWTRepository, UserRepository
 from apps.users.applications import JWTUsesCases
 from apps.users.domain.constants import UserRoles
 from apps.users.models import User, JWTBlacklist, JWT
-from apps.exceptions import (
-    DatabaseConnectionError,
-    ResourceNotFoundError,
-    JWTError,
+from apps.api_exceptions import (
+    DatabaseConnectionAPIError,
+    ResourceNotFoundAPIError,
+    JWTAPIError,
 )
 from tests.factory import JWTFactory
 from tests.utils import empty_queryset
@@ -91,7 +91,7 @@ class TestApplication:
         first.return_value = User
 
         # Instantiating the application
-        with pytest.raises(ResourceNotFoundError):
+        with pytest.raises(ResourceNotFoundAPIError):
             self.application_class(
                 user_repository=user_repository,
                 jwt_repository=jwt_repository,
@@ -131,7 +131,7 @@ class TestApplication:
         _ = save_jwt_db(user=user, data=refresh_data)
 
         # Instantiating the application
-        with pytest.raises(JWTError):
+        with pytest.raises(JWTAPIError):
             self.application_class(
                 user_repository=UserRepository,
                 jwt_repository=JWTRepository,
@@ -172,7 +172,7 @@ class TestApplication:
         get_user_data.return_value = empty_queryset(model=User)
 
         # Instantiating the application
-        with pytest.raises(ResourceNotFoundError):
+        with pytest.raises(ResourceNotFoundAPIError):
             self.application_class(
                 user_repository=user_repository,
                 jwt_repository=jwt_repository,
@@ -203,10 +203,10 @@ class TestApplication:
         add_to_checklist: Mock = jwt_repository.add_to_checklist
 
         # Setting the return values
-        get_user_data.side_effect = DatabaseConnectionError
+        get_user_data.side_effect = DatabaseConnectionAPIError
 
         # Instantiating the application
-        with pytest.raises(DatabaseConnectionError):
+        with pytest.raises(DatabaseConnectionAPIError):
             self.application_class(
                 user_repository=user_repository,
                 jwt_repository=jwt_repository,

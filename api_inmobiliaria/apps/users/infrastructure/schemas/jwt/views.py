@@ -1,8 +1,12 @@
 from apps.users.applications.jwt import JWTErrorMessages
 from apps.users.domain.constants import UserProperties
-from apps.exceptions import JWTError, PermissionDenied, DatabaseConnectionError
+from apps.api_exceptions import (
+    JWTAPIError,
+    PermissionDeniedAPIError,
+    DatabaseConnectionAPIError,
+    AuthenticationFailedAPIError,
+)
 from apps.utils import ERROR_MESSAGES
-from rest_framework_simplejwt.exceptions import AuthenticationFailed
 from rest_framework.fields import CharField
 from drf_spectacular.utils import (
     extend_schema,
@@ -103,7 +107,7 @@ AuthenticationSchema = extend_schema(
                     summary="Credentials invalid",
                     description="The email or password provided is incorrect.",
                     value={
-                        "code": AuthenticationFailed.default_code,
+                        "code": AuthenticationFailedAPIError.default_code,
                         "detail": JWTErrorMessages.AUTHENTICATION_FAILED.value,
                     },
                 ),
@@ -112,7 +116,7 @@ AuthenticationSchema = extend_schema(
                     summary="Inactive user account",
                     description="The user account is inactive.",
                     value={
-                        "code": AuthenticationFailed.default_code,
+                        "code": AuthenticationFailedAPIError.default_code,
                         "detail": JWTErrorMessages.INACTIVE_ACCOUNT.value,
                     },
                 ),
@@ -132,8 +136,8 @@ AuthenticationSchema = extend_schema(
                     summary="Permission denied",
                     description="This response appears when the user trying to authenticate does not have the permissions to do so with JSON Web Token.",
                     value={
-                        "code": PermissionDenied.default_code,
-                        "detail": PermissionDenied.default_detail,
+                        "code": PermissionDeniedAPIError.default_code,
+                        "detail": PermissionDeniedAPIError.default_detail,
                     },
                 ),
             ],
@@ -152,8 +156,8 @@ AuthenticationSchema = extend_schema(
                     summary="Database connection error",
                     description="The connection to the database could not be established.",
                     value={
-                        "code": DatabaseConnectionError.default_code,
-                        "detail": DatabaseConnectionError.default_detail,
+                        "code": DatabaseConnectionAPIError.default_code,
+                        "detail": DatabaseConnectionAPIError.default_detail,
                     },
                 ),
             ],
@@ -237,7 +241,7 @@ UpdateTokensSchema = extend_schema(
                     summary="Token error",
                     description="The provided JSON Web Tokens do not match the user's last generated tokens.",
                     value={
-                        "code": JWTError.default_code,
+                        "code": JWTAPIError.default_code,
                         "detail": JWTErrorMessages.JWT_ERROR.value,
                     },
                 ),
@@ -286,8 +290,8 @@ UpdateTokensSchema = extend_schema(
                     summary="Database connection error",
                     description="The connection to the database could not be established.",
                     value={
-                        "code": DatabaseConnectionError.default_code,
-                        "detail": DatabaseConnectionError.default_detail,
+                        "code": DatabaseConnectionAPIError.default_code,
+                        "detail": DatabaseConnectionAPIError.default_detail,
                     },
                 ),
             ],
@@ -317,7 +321,7 @@ LogoutSchema = extend_schema(
                     summary="Token error",
                     description="The provided JSON Web Tokens do not match the user's last generated tokens.",
                     value={
-                        "code": JWTError.default_code,
+                        "code": JWTAPIError.default_code,
                         "detail": JWTErrorMessages.JWT_ERROR.value,
                     },
                 ),
@@ -366,8 +370,8 @@ LogoutSchema = extend_schema(
                     summary="Database connection error",
                     description="The connection to the database could not be established.",
                     value={
-                        "code": DatabaseConnectionError.default_code,
-                        "detail": DatabaseConnectionError.default_detail,
+                        "code": DatabaseConnectionAPIError.default_code,
+                        "detail": DatabaseConnectionAPIError.default_detail,
                     },
                 ),
             ],
