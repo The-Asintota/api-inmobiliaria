@@ -22,16 +22,23 @@
             </div>
         </section>
         <section class="content__message">
-            <div class="message__text">
-                <h1>Ha ocurrido un error</h1>
-                <p>{{ message }}</p>
+            <div class="message">
+                <div class="message__text">
+                    <h1>Ha ocurrido un error</h1>
+                    <p>{{ message }}</p>
+                </div>
+                <img 
+                    class="message__img"
+                    src="{% static "images/account_activation/HouseFront.png" %}"
+                >
             </div>
-            <img 
-                class="message__img"
-                src="{% static "images/account_activation/HouseFront.png" %}"
-            >
             {% if redirect.action != "Solicitar nuevo enlace" %}
-                <a href="{{ redirect.url|escape }}" role="button">{{ redirect.action }}</a>
+                <a 
+                    href="{{ redirect.url|escape }}"
+                    role="button"
+                >
+                    {{ redirect.action }}
+                </a>
             {% else %}
                 <a 
                     class="requestNewLink"

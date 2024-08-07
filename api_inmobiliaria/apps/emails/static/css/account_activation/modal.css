@@ -8,6 +8,7 @@
     display: flex;
     background-color: #111111bd;
     opacity: 0;
+    z-index: 1;
     pointer-events: none;
 }
 
@@ -43,14 +44,19 @@
 .modal__container > .container__message {
     display: flex;
     align-items: center;
-    gap: 30px;
-    padding-left: 40px;
-    padding-right: 40px;
+    gap: 0;
+    padding-left: 30px;
+    padding-right: 30px;
+}
+
+.modal__container > .container__message > p {
+    transform: scale(0.9)
 }
 
 .modal__container > .container__message > img {
     width: 140px;
     height: 140px;
+    transform: scale(0.8)
 }
 
 .modal__container > .container__button {
