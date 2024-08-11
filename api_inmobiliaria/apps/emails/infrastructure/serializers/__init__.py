@@ -1,1 +1,1 @@
-from .account_activation import AccountActivationDataSerializer
+from .account_management import Base64UserTokenSerializer

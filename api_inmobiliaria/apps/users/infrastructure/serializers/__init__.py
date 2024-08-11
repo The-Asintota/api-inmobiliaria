@@ -1,5 +1,5 @@
 from .base import BaseUserDataSerializer
-from .searcher_user import (
+from .searcher import (
     SearcherRegisterSerializer,
 )
 from .jwt import (

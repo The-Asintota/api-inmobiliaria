@@ -5,7 +5,7 @@ from drf_spectacular.utils import (
 )
 
 
-SearcherUserRegisterSerializerSchema = extend_schema_serializer(
+SearcherRegisterSerializerSchema = extend_schema_serializer(
     examples=[
         OpenApiExample(
             name="data_valid",

@@ -1,4 +1,4 @@
 from django.dispatch import Signal
 
 
-user_registered = Signal()
+account_activation_mail = Signal()

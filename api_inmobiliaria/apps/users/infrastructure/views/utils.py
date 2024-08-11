@@ -5,7 +5,7 @@ from apps.api_exceptions import (
 from rest_framework.serializers import Serializer
 from rest_framework.request import Request
 from rest_framework import permissions, generics
-from typing import List, Callable
+from typing import Dict, List, Any, Callable
 
 
 class MethodHTTPMapped:
@@ -21,12 +21,10 @@ class MethodHTTPMapped:
     Any class that inherits from MethodHTTPMapped must also inherit from GenericAPIView.
     """
 
-    application_class = None
-    application_mapping = {}
-    authentication_mapping = {}
-    permission_mapping = {}
-    serializer_mapping = {}
-    status_code_mapping = {}
+    application_mapping: Dict[str, Any]
+    authentication_mapping: Dict[str, Any]
+    permission_mapping: Dict[str, Any]
+    serializer_mapping: Dict[str, Any]
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
@@ -72,21 +70,18 @@ class MethodHTTPMapped:
 
         return self.serializer_mapping[self.request.method]
 
-    def get_application_class(self) -> Callable:
+    def get_application_class(self, **dependencies: Any):
         """
         Returns the application class that the view should use for the incoming
         request based on the HTTP method.
+
+        #### Parameters:
+        - dependencies: Any dependencies that the application class requires.
         """
 
-        return self.application_mapping[self.request.method]
+        application_class = self.application_mapping[self.request.method]
 
-    def get_status_code(self) -> str:
-        """
-        Returns the status code that the view should use for the incoming request
-        based on the HTTP method.
-        """
-
-        return self.status_code_mapping[self.request.method]
+        return application_class(**dependencies)
 
     def permission_denied(
         self, request: Request, message: str = None, code: str = None

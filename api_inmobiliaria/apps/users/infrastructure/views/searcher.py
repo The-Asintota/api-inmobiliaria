@@ -3,10 +3,10 @@ from apps.users.infrastructure.serializers import (
 )
 from apps.users.infrastructure.db import UserRepository
 from apps.users.infrastructure.views.utils import MethodHTTPMapped
-from apps.users.infrastructure.schemas.searcher_user import (
-    SearcherUserRegisterMethodSchema,
+from apps.users.infrastructure.schemas.searcher import (
+    SearcherRegisterSchema,
 )
-from apps.users.applications import SearcherUsesCases
+from apps.users.applications import RegisterUser
 from rest_framework.serializers import Serializer
 from rest_framework.response import Response
 from rest_framework.request import Request
@@ -23,9 +23,8 @@ class SearcherUserAPIView(MethodHTTPMapped, GenericAPIView):
     permissions, and serializers based on the HTTP method of the incoming request.
     """
 
-    application_class = SearcherUsesCases(user_repository=UserRepository)
     application_mapping = {
-        "POST": application_class.create_user,
+        "POST": RegisterUser,
     }
     authentication_mapping = {
         "POST": [],
@@ -36,25 +35,9 @@ class SearcherUserAPIView(MethodHTTPMapped, GenericAPIView):
     serializer_mapping = {
         "POST": SearcherRegisterSerializer,
     }
-    status_code_mapping = {
-        "POST": status.HTTP_201_CREATED,
-    }
-
-    def __handle_valid_request(
-        self, data: Dict[str, Any], request: Request
-    ) -> Response:
-        """
-        Handle a valid request by invoking the application logic and returning a
-        response.
-        """
-
-        application = self.get_application_class()
-        application(data=data, request=request)
-
-        return Response(status=self.get_status_code())
 
     @staticmethod
-    def __handle_invalid_request(errors: List[Dict[str, Any]]) -> Response:
+    def _handle_invalid_request_data(errors: List[Dict[str, Any]]) -> Response:
         """
         Handle an invalid request by returning a response with error details.
         """
@@ -68,7 +51,7 @@ class SearcherUserAPIView(MethodHTTPMapped, GenericAPIView):
             content_type="application/json",
         )
 
-    @SearcherUserRegisterMethodSchema
+    @SearcherRegisterSchema
     def post(self, request: Request, *args, **kwargs) -> Response:
         """
         Handle POST requests for searcher user registration.
@@ -83,9 +66,12 @@ class SearcherUserAPIView(MethodHTTPMapped, GenericAPIView):
         serializer_class = self.get_serializer_class()
         serializer: Serializer = serializer_class(data=request.data)
 
-        if serializer.is_valid():
-            return self.__handle_valid_request(
-                data=serializer.validated_data, request=request
-            )
+        if not serializer.is_valid():
+            return self._handle_invalid_request_data(errors=serializer.errors)
 
-        return self.__handle_invalid_request(errors=serializer.errors)
+        register: RegisterUser = self.get_application_class(
+            user_repository=UserRepository
+        )
+        register.searcher(data=serializer.validated_data, request=request)
+
+        return Response(status=status.HTTP_201_CREATED)

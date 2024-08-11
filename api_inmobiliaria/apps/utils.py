@@ -1,18 +1,18 @@
 from apps.users.domain.typing import JSONWebToken, JWTPayload
 from apps.constants import ERROR_MESSAGES
-from apps.api_exceptions import APIException, PermissionDeniedAPIError
+from apps.api_exceptions import APIException
 from apps.view_exceptions import ViewException
 from settings.environments.base import SIMPLE_JWT
 from rest_framework.response import Response
 from rest_framework.views import set_rollback
 from rest_framework import serializers, exceptions
-from django.core.exceptions import PermissionDenied
 from django.http.request import HttpRequest
 from django.http.response import HttpResponse
 from django.shortcuts import render
 from django.http import Http404
 from typing import Dict, Any
 from jwt import decode
+from uuid import UUID
 
 
 class ErrorMessagesSerializer(serializers.Serializer):
@@ -42,14 +42,12 @@ def api_view_exception_handler(
     Custom exception handler to return a response with a detailed error message.
 
     Args:
-    - exc (Exception) : The exception instance to be handled.
-    - context (dict) : A dictionary containing the request object.
+    - exc: The exception instance to be handled.
+    - context: A dictionary containing the request object.
     """
 
     if isinstance(exc, Http404):
         exc = exceptions.NotFound(*(exc.args))
-    elif isinstance(exc, PermissionDenied):
-        exc = PermissionDeniedAPIError(*(exc.args))
     elif isinstance(exc, APIException):
         headers = {}
 
@@ -75,7 +73,7 @@ def view_exception_handler(view_func) -> HttpResponse:
     Decorator to handle exceptions raised in views.
     """
 
-    def __wrapped_view_func(
+    def _wrapped_view_func(
         request: HttpRequest, *args, **kwargs
     ) -> HttpResponse:
         """
@@ -95,7 +93,7 @@ def view_exception_handler(view_func) -> HttpResponse:
                 status=exc.status_code,
             )
 
-    return __wrapped_view_func
+    return _wrapped_view_func
 
 
 def decode_jwt(
@@ -111,3 +109,16 @@ def decode_jwt(
         algorithms=[SIMPLE_JWT["ALGORITHM"]],
         options=options,
     )
+
+
+def is_valid_uuid(value: str) -> bool:
+    """
+    Validates if the provided string is a valid UUID.
+    """
+
+    try:
+        UUID(value)
+
+        return True
+    except ValueError:
+        return False

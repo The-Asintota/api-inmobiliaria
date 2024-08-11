@@ -1,7 +1,7 @@
 from apps.users.infrastructure.db import UserRepository
 from apps.users.infrastructure.serializers.base import BaseUserDataSerializer
-from apps.users.infrastructure.schemas.searcher_user import (
-    SearcherUserRegisterSerializerSchema,
+from apps.users.infrastructure.schemas.searcher import (
+    SearcherRegisterSerializerSchema,
 )
 from apps.users.domain.constants import UserRoles, SearcherProperties
 from apps.utils import ErrorMessagesSerializer
@@ -128,7 +128,7 @@ class SearcherDataSerializer(ErrorMessagesSerializer):
         return value
 
 
-@SearcherUserRegisterSerializerSchema
+@SearcherRegisterSerializerSchema
 class SearcherRegisterSerializer(BaseUserDataSerializer):
     """
     Defines the fields that are required for the searcher user registration.

@@ -8,7 +8,7 @@ from drf_spectacular.utils import (
 )
 
 
-SearcherUserRegisterMethodSchema = extend_schema(
+SearcherRegisterSchema = extend_schema(
     operation_id="create_searcher_user",
     tags=["Users"],
     responses={

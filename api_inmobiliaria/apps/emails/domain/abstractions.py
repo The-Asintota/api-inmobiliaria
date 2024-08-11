@@ -44,9 +44,9 @@ class ITokenGenerator(Protocol):
     ITokenGenerator is a protocol that defines the interface for a token generator.
     """
 
-    def make_token(cls, user: User) -> str:
+    def make_token(self, user: User) -> str:
         """
-        Generate a token for the given user and store it in the repository.
+        Generate a token for the given user.
 
         #### Parameters:
         - user: A instance of the User model.
@@ -54,7 +54,7 @@ class ITokenGenerator(Protocol):
 
         ...
 
-    def check_token(cls, user: User, token: Token) -> bool:
+    def check_token(self, user: User, token: Token) -> bool:
         """
         Check that a token is correct for a given user.
 

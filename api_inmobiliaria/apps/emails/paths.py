@@ -1,7 +1,9 @@
 TEMPLATES = {
-    "account_activation": {
-        "email_body": "account_activation/EmailBody.html",
-        "failed": "account_activation/ValidationError.html",
-        "success": "account_activation/ValidationOk.html",
+    "account_management": {
+        "activation": {
+            "email_body": "account_management/activation/EmailBody.html",
+            "ok": "account_management/activation/AccountActivation.html",
+        },
+        "error": "account_management/Error.html",
     },
 }

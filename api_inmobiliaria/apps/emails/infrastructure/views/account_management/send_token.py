@@ -1,6 +1,8 @@
-from apps.emails.applications import AccountActivation
+from apps.emails.infrastructure.db import TokenRepository
+from apps.emails.applications.managers import ActionLinkManager
 from apps.emails.utils import TokenGenerator
 from apps.users.infrastructure.db import UserRepository
+from apps.utils import is_valid_uuid
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.generics import GenericAPIView
@@ -9,7 +11,7 @@ from drf_spectacular.utils import extend_schema
 
 
 @extend_schema(exclude=True)
-class AccountActivationEmailAPIView(GenericAPIView):
+class SendTokenAPIView(GenericAPIView):
     """
     API view for sending an account activation email to a user.
 
@@ -20,8 +22,8 @@ class AccountActivationEmailAPIView(GenericAPIView):
 
     authentication_classes = []
     permission_classes = []
-    application_class = AccountActivation
-    __user_repository = UserRepository
+    application_class = None
+    action = None
 
     def get(self, request: Request, *args, **kwargs) -> Response:
         """
@@ -31,18 +33,28 @@ class AccountActivationEmailAPIView(GenericAPIView):
         UUID. The user is identified by the UUID in the URL.
         """
 
-        user = self.__user_repository.get_user_data(
-            uuid=kwargs["user_uuid"]
-        ).first()
+        if not is_valid_uuid(value=kwargs["user_uuid"]):
+            return Response(
+                data={
+                    "code": "invalid_request_data",
+                    "detail": "The user UUID provided is invalid.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+                content_type="application/json",
+            )
 
-        self.application_class(token_class=TokenGenerator()).send_email(
-            user=user, request=request
+        user = UserRepository.get_user_data(uuid=kwargs["user_uuid"]).first()
+
+        application: ActionLinkManager = self.application_class(
+            token_class=TokenGenerator(),
+            token_repository=TokenRepository,
         )
+        application.send_email(user=user, request=request)
 
         return Response(
             data={
                 "detail": {
-                    "message": "Se ha enviado a tu dirección de correo electrónico un mensaje con el nuevo enlace de activación de tu cuenta. Por favor, compruebe su bandeja de entrada."
+                    "message": f"Se ha enviado a tu dirección de correo electrónico un mensaje con instrucciones para {self.action}. Por favor, compruebe su bandeja de entrada."
                 }
             },
             status=status.HTTP_200_OK,

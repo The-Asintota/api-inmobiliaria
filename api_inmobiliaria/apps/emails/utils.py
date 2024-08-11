@@ -1,5 +1,4 @@
 from apps.emails.infrastructure.db import TokenRepository
-from apps.emails.domain.typing import Token
 from apps.users.models import User
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 import base64
@@ -38,16 +37,9 @@ class TokenGenerator(PasswordResetTokenGenerator):
             + six.text_type(user.is_active)
         )
 
-    def _save_token(self, token: Token) -> None:
-        """
-        Save the token in the database.
-        """
-
-        self._token_repository.create(token=token)
-
     def make_token(self, user: User) -> str:
         """
-        Generate a token for the given user and store it in the repository.
+        Generate a token for the given user.
 
         #### Parameters:
         - user: A instance of the User model.
@@ -58,6 +50,5 @@ class TokenGenerator(PasswordResetTokenGenerator):
             self._num_seconds(self._now()),
             self.secret,
         )
-        self._save_token(token=token)
 
         return token

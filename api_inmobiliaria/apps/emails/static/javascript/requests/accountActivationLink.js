@@ -1,6 +1,6 @@
-const DEFAULT_ERROR_MESSAGE = 'Algo ha ido mal. Vuelva a intentarlo más tarde.'
+const DEFAULT_ERROR_MESSAGE = 'Lo sentimos, se ha producido un error inesperado en nuestro sistema. No se ha podido completar tu solicitud en este momento. Por favor, inténtalo de nuevo más tarde. Si el problema persiste, puedes ponerte en contacto con nuestro equipo de soporte al cliente para obtener más ayuda. Disculpa las molestias y gracias por tu paciencia.'
 const IMG_OK = 'EmailMessage.png'
-const IMG_ERROR = 'EmailMessageError.png'
+const IMG_ERROR = 'Error.png'
 
 // Selectors
 const requestNewLink = document.querySelector('.requestNewLink')

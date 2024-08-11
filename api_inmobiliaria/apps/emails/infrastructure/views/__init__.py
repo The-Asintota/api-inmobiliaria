@@ -1,2 +1,0 @@
-from .account_activation import AccountActivationView
-from .account_activation_email import AccountActivationEmailAPIView

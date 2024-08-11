@@ -1,2 +1,2 @@
-from .searcher_user import SearcherUsesCases
+from .register import RegisterUser
 from .jwt import JWTUsesCases, JWTErrorMessages
