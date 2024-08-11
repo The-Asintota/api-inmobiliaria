@@ -8,12 +8,119 @@ from apps.users.domain.typing import (
     AccessToken,
     RefreshToken,
     JWTPayload,
+    UserUUID,
 )
+from apps.users.models import User, JWT, UserManager
+from apps.emails.utils import TokenGenerator
+from apps.emails.models import Token
+from tests.utils import fake
 from rest_framework_simplejwt.utils import aware_utcnow, datetime_to_epoch
+from django.contrib.auth.models import Group
+from typing import Tuple, Dict, Any
 from datetime import datetime
+from copy import deepcopy
 from jwt import encode
 from uuid import uuid4
-from typing import Dict, Any
+
+
+class UserFactory:
+    """
+    Factory in charge of creating users with false data.
+    """
+
+    model = User
+
+    @classmethod
+    def _create_user(
+        cls, data: Dict[str, Any], role: str, active: bool
+    ) -> User:
+        """
+        This method creates a user with the provided data.
+        """
+
+        user_maager: UserManager = cls.model.objects
+
+        return user_maager.create_user(
+            base_data=data["base_data"],
+            role_data=data["role_data"],
+            related_model_name=role,
+            is_active=active,
+        )
+
+    @classmethod
+    def _assign_permissions(user: User, role: str) -> None:
+        """
+        This method assigns the permissions of the provided role to the user.
+        """
+
+        group = Group.objects.get(name=role)
+        user.groups.add(group)
+        user.save()
+
+    @classmethod
+    def create_searcher_user(
+        cls,
+        active: bool,
+        add_perm: bool,
+        save: bool,
+        **data: Dict[str, Any],
+    ) -> Tuple[User | None, Dict[str, Dict]]:
+        """
+        This method creates a searcher user with the provided data.
+        """
+
+        if add_perm and not save:
+            raise ValueError(
+                "The user must be saved in order to assign permissions."
+            )
+
+        user = None
+        user_data = {
+            "base_data": {
+                "email": data.get("email", None) or fake.email(),
+                "password": data.get("password", None) or "contraseña1234",
+            },
+            "role_data": {
+                "name": data.get("name", None) or fake.name(),
+                "last_name": data.get("last_name", None) or fake.last_name(),
+                "cc": data.get("cc", None) or fake.random_number(digits=9),
+                "address": data.get("address", None) or fake.address(),
+                "phone_number": data.get("phone_number", None)
+                or fake.phone_number(),
+            },
+        }
+
+        if save:
+            user = cls._create_user(
+                data=deepcopy(user_data),
+                active=active,
+                role=UserRoles.SEARCHER.value,
+            )
+        elif add_perm:
+            cls._assign_permissions(user=user, role=UserRoles.SEARCHER.value)
+
+        return user, user_data
+
+
+class TokenFactory:
+    """
+    Factory for the token that is used in various user-related email communication,
+    the token is a unique identifier that ensures the security and validity of the
+    processes initiated.
+    """
+
+    def __init__(self, user: User) -> None:
+        self.value = TokenGenerator().make_token(user=user)
+
+    def save(self) -> Token:
+        """
+        This method saves the token in the database.
+        """
+
+        return Token.objects.create(token=self.value)
+
+    def __str__(self) -> str:
+        return self.value
 
 
 class JWTFactory:
@@ -23,7 +130,7 @@ class JWTFactory:
 
     @staticmethod
     def _get_payload(
-        token_type: str, exp: datetime, user_uuid: str, role: str
+        token_type: str, exp: datetime, user_uuid: UserUUID, role: str
     ) -> JWTPayload:
         """
         This method returns the payload for a token.
@@ -49,7 +156,7 @@ class JWTFactory:
         cls,
         token_type: str,
         exp: datetime,
-        user_uuid: str,
+        user_uuid: UserUUID,
         role: str,
     ) -> Dict[str, Any]:
         """
@@ -75,7 +182,7 @@ class JWTFactory:
 
     @classmethod
     def access(
-        cls, exp: bool, user_uuid: str = None, role: str = None
+        cls, exp: bool, user_uuid: UserUUID = None, role: str = None
     ) -> Dict[str, Any]:
         """
         Creates an access token.
@@ -101,7 +208,7 @@ class JWTFactory:
 
     @classmethod
     def refresh(
-        cls, exp: bool, user_uuid: str = None, role: str = None
+        cls, exp: bool, user_uuid: UserUUID = None, role: str = None
     ) -> Dict[str, Any]:
         """
         Creates a refresh token.
@@ -130,7 +237,7 @@ class JWTFactory:
         cls,
         exp_access: bool,
         exp_refresh: bool,
-        user_uuid: str = None,
+        user_uuid: UserUUID = None,
         role: str = None,
     ) -> Dict[str, Any]:
         """

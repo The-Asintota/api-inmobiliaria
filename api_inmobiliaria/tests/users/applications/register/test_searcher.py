@@ -1,5 +1,5 @@
 from apps.users.infrastructure.db import UserRepository
-from apps.users.applications import SearcherUsesCases
+from apps.users.applications import RegisterUser
 from apps.users.domain.constants import USER_ROLE_PERMISSIONS, UserRoles
 from apps.users.models import User, Searcher
 from apps.emails.domain.constants import SubjectsMail
@@ -13,15 +13,15 @@ from copy import deepcopy
 import pytest
 
 
+@pytest.mark.django_db
 class TestCreateSearcherUser:
     """
     This class encapsulates the tests for the use case or business logic
     responsible for creating a user with the "Searcher" role.
     """
 
-    application_class = SearcherUsesCases
+    application_class = RegisterUser
 
-    @pytest.mark.django_db
     def test_created_successfully(self, setup_database: Callable) -> None:
         """
         This test is responsible for validating the expected behavior of the
@@ -41,7 +41,7 @@ class TestCreateSearcherUser:
         assert not User.objects.filter(email=data["email"]).exists()
         assert not Searcher.objects.filter(name=data["name"]).exists()
 
-        self.application_class(user_repository=UserRepository).create_user(
+        self.application_class(user_repository=UserRepository).searcher(
             data=deepcopy(data),
             request=RequestFactory().post("/"),
         )
@@ -83,7 +83,7 @@ class TestCreateSearcherUser:
 
         # Instantiating the application and calling the method
         with pytest.raises(DatabaseConnectionAPIError):
-            self.application_class(user_repository=user_repository).create_user(
+            self.application_class(user_repository=user_repository).searcher(
                 data={
                     "name": "Nombre del usuario",
                     "last_name": "Apellido del usuario",

@@ -5,7 +5,9 @@ from apps.users.domain.abstractions import (
     ITokenClass,
 )
 from apps.users.models import User, JWT, UserManager
+from apps.emails.domain.abstractions import ITokenRepository
 from apps.emails.utils import TokenGenerator
+from tests.utils import fake
 from rest_framework_simplejwt.utils import datetime_from_epoch
 from django.contrib.auth.models import Group, Permission
 from django.db.models.query import QuerySet
@@ -53,18 +55,19 @@ def create_user() -> Callable[[bool, str, bool], Tuple[User, Dict[str, Dict]]]:
         data = {
             UserRoles.SEARCHER.value: {
                 "base_data": {
-                    "email": user_data.get("email", None) or "user1@email.com",
+                    "email": user_data.get("email", None) or fake.email(),
                     "password": user_data.get("password", None)
                     or "contraseña1234",
                 },
                 "role_data": {
-                    "name": user_data.get("name", None) or "Nombre del usuario",
+                    "name": user_data.get("name", None) or fake.name(),
                     "last_name": user_data.get("last_name", None)
-                    or "Apellido del usuario",
-                    "cc": user_data.get("cc", None) or "123456789",
-                    "address": user_data.get("address", None) or "Residencia 1",
+                    or fake.last_name(),
+                    "cc": user_data.get("cc", None)
+                    or fake.random_number(digits=9),
+                    "address": user_data.get("address", None) or fake.address(),
                     "phone_number": user_data.get("phone_number", None)
-                    or "+57 3123574898",
+                    or fake.phone_number(),
                 },
             },
         }
@@ -136,6 +139,15 @@ def jwt_repository() -> Mock:
 
 
 @pytest.fixture
+def token_repository() -> Mock:
+    """
+    Mock the `ITokenRepository` class.
+    """
+
+    return Mock(spec_set=ITokenRepository, name="ITokenRepositoryMock")
+
+
+@pytest.fixture
 def jwt_class() -> Mock:
     """
     Mock the `TokenClass` class.
@@ -145,7 +157,7 @@ def jwt_class() -> Mock:
 
 
 @pytest.fixture
-def token_generator() -> Mock:
+def token_class() -> Mock:
     """
     Mock the `TokenGenerator` class.
     """
