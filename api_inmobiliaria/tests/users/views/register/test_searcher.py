@@ -1,43 +1,37 @@
 from apps.users.domain.constants import (
     SearcherProperties,
     UserProperties,
-    UserRoles,
 )
-from apps.users.models import User
 from apps.api_exceptions import DatabaseConnectionAPIError
 from apps.utils import ERROR_MESSAGES
+from tests.factory import UserFactory
 from tests.utils import fake
+from rest_framework import status
 from django.test import Client
 from django.urls import reverse
 from unittest.mock import Mock, patch
-from typing import Callable, Tuple, Dict
+from typing import Callable, Dict
 import pytest
 
 
-@pytest.fixture
-def setUp() -> Tuple[Client, str]:
-    """
-    A fixture to set up the client and the path for the view.
-    """
-
-    return Client(), reverse(viewname="searcher_user")
-
-
-class TestAPIViewPOSTMethod:
+@pytest.mark.django_db
+class TestSearcherUserAPIView:
     """
     This class encapsulates the tests for the view responsible for creating a
     user with the "Searcher" role.
     """
 
-    @pytest.mark.django_db
-    def test_request_valid(
-        self, setUp: Tuple[Client, str], setup_database: Callable
-    ) -> None:
+    path = reverse(viewname="searcher_user")
+    user_factory = UserFactory
+    client = Client()
+
+    def test_request_valid_data(self, setup_database: Callable) -> None:
         """
         This test is responsible for validating the expected behavior of the
         view when the request data is valid.
         """
 
+        # Creating the user data to be used in the test
         data = {
             "name": "Nombre del usuario",
             "last_name": "Apellido del usuario",
@@ -47,15 +41,13 @@ class TestAPIViewPOSTMethod:
         }
 
         # Simulating the request
-        client, path = setUp
-        response = client.post(
-            path=path, data=data, content_type="application/json"
+        response = self.client.post(
+            path=self.path, data=data, content_type="application/json"
         )
 
         # Asserting that response data is correct
-        assert response.status_code == 201
+        assert response.status_code == status.HTTP_201_CREATED
 
-    @pytest.mark.django_db
     @pytest.mark.parametrize(
         argnames="data, error_messages",
         argvalues=[
@@ -147,26 +139,23 @@ class TestAPIViewPOSTMethod:
             "password_no_upper_lower",
         ],
     )
-    def test_invalid_data(
+    def test_request_invalid_data(
         self,
-        setUp: Tuple[Client, str],
         data: Dict[str, Dict],
         error_messages: Dict[str, Dict],
     ) -> None:
         """
         This test is responsible for validating the expected behavior of the
-        view when the request data is invalid and does not exist in the
-        database.
+        view when the request data is invalid and does not exist in the database.
         """
 
         # Simulating the request
-        client, path = setUp
-        response = client.post(
-            path=path, data=data, content_type="application/json"
+        response = self.client.post(
+            path=self.path, data=data, content_type="application/json"
         )
 
         # Asserting that response data is correct
-        assert response.status_code == 400
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert response.data["code"] == "invalid_request_data"
 
         errors_formatted = {
@@ -177,7 +166,6 @@ class TestAPIViewPOSTMethod:
         for field, message in error_messages.items():
             assert errors_formatted[field] == message
 
-    @pytest.mark.django_db
     @pytest.mark.parametrize(
         argnames="data, error_messages",
         argvalues=[
@@ -198,8 +186,6 @@ class TestAPIViewPOSTMethod:
     )
     def test_data_used(
         self,
-        setUp: Tuple[Client, str],
-        create_user: Callable[[bool, str, bool], Tuple[User, Dict[str, Dict]]],
         data: Dict[str, Dict],
         error_messages: Dict[str, Dict],
     ) -> None:
@@ -208,25 +194,24 @@ class TestAPIViewPOSTMethod:
         view when the request data is invalid and exists in the database.
         """
 
-        # Creating a user
-        _ = create_user(
+        # Creating the user
+        _ = self.user_factory.create_searcher_user(
             email=data["email"],
             password=data["password"],
             name=data["name"],
             last_name=data["last_name"],
-            active=False,
-            role=UserRoles.SEARCHER.value,
+            is_active=False,
+            save=True,
             add_perm=False,
         )
 
         # Simulating the request
-        client, path = setUp
-        response = client.post(
-            path=path, data=data, content_type="application/json"
+        response = self.client.post(
+            path=self.path, data=data, content_type="application/json"
         )
 
         # Asserting that response data is correct
-        assert response.status_code == 400
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert response.data["code"] == "invalid_request_data"
 
         errors_formatted = {
@@ -238,37 +223,30 @@ class TestAPIViewPOSTMethod:
             assert errors_formatted[field] == message
 
     @patch("apps.users.infrastructure.serializers.base.UserRepository")
-    def test_exception_raised_db(
-        self, user_repository_mock: Mock, setUp: Tuple[Client, str]
-    ) -> None:
+    def test_if_conection_db_failed(self, user_repository_mock: Mock) -> None:
         """
         This test is responsible for validating the expected behavior of the
         view when a DatabaseConnectionAPIError exception is raised.
         """
 
-        # Mocking the methods of the UserRepository class
-        # To control the behavior of serializer validations that use these methods
-        # We make it return a DatabaseConnectionAPIErrorror exception
+        # Mocking the methods
         get_user_data: Mock = user_repository_mock.get_user_data
         get_user_data.side_effect = DatabaseConnectionAPIError
 
+        # Creating the user data to be used in the test
+        _, data = self.user_factory.create_searcher_user(save=False)
+        data["confirm_password"] = data["password"]
+
         # Simulating the request
-        client, path = setUp
-        response = client.post(
-            path=path,
-            data={
-                "name": "Nombre del usuario",
-                "last_name": "Apellido del usuario",
-                "email": "user1@email.com",
-                "password": "contraseña1234",
-                "confirm_password": "contraseña1234",
-            },
-            content_type="application/json",
+        response = self.client.post(
+            path=self.path, data=data, content_type="application/json"
         )
 
         # Asserting that response data is correct
-        assert response.status_code == DatabaseConnectionAPIError.status_code
-        assert response.data["code"] == DatabaseConnectionAPIError.default_code
-        assert (
-            response.data["detail"] == DatabaseConnectionAPIError.default_detail
-        )
+        status_code_expected = DatabaseConnectionAPIError.status_code
+        response_code_expected = DatabaseConnectionAPIError.default_code
+        response_data_expected = DatabaseConnectionAPIError.default_detail
+
+        assert response.status_code == status_code_expected
+        assert response.data["code"] == response_code_expected
+        assert response.data["detail"] == response_data_expected

@@ -2,6 +2,7 @@ from apps.users.infrastructure.serializers import SearcherRegisterSerializer
 from apps.users.domain.constants import SearcherProperties, UserProperties
 from apps.users.models import User
 from apps.utils import ERROR_MESSAGES
+from tests.factory import UserFactory
 from tests.utils import empty_queryset, fake
 from unittest.mock import Mock, patch
 from typing import Dict, List
@@ -15,14 +16,16 @@ class TestRegisterSerializer:
     """
 
     serializer_class = SearcherRegisterSerializer
+    user_factory = UserFactory
 
     @patch("apps.users.infrastructure.serializers.base.UserRepository")
-    def test_correct_execution(self, repository: Mock) -> None:
+    def test_valid_data(self, user_repository_mock: Mock) -> None:
         """
         This test is responsible for validating the expected behavior of the
         serializer when the log data is valid.
         """
 
+        # Creating the user data to be used in the test
         data = {
             "name": "Nombre del usuario",
             "last_name": "Apellido del usuario",
@@ -31,10 +34,8 @@ class TestRegisterSerializer:
             "confirm_password": "contraseña1234",
         }
 
-        # Mocking the methods of the UserRepository class
-        # To control the behavior of serializer validations that use these methods
-        # We make it return an empty QuerySet so that validations do not fail
-        get_user_data: Mock = repository.get_user_data
+        # Mocking the methods
+        get_user_data: Mock = user_repository_mock.get_user_data
         get_user_data.return_value = empty_queryset(model=User)
 
         serializer = self.serializer_class(data=data)
@@ -137,9 +138,9 @@ class TestRegisterSerializer:
         ],
     )
     @patch("apps.users.infrastructure.serializers.base.UserRepository")
-    def test_failed_execution(
+    def test_invalid_data(
         self,
-        repository: Mock,
+        user_repository_mock: Mock,
         data: Dict[str, str],
         error_messages: Dict[str, List],
     ) -> None:
@@ -149,10 +150,8 @@ class TestRegisterSerializer:
         database.
         """
 
-        # Mocking the methods of the UserRepository class
-        # To control the behavior of serializer validations that use these methods
-        # We make it return an empty QuerySet so that validations do not fail
-        get_user_data: Mock = repository.get_user_data
+        # Mocking the method
+        get_user_data: Mock = user_repository_mock.get_user_data
         get_user_data.return_value = empty_queryset(model=User)
 
         serializer = self.serializer_class(data=data)
@@ -190,7 +189,7 @@ class TestRegisterSerializer:
     @patch("apps.users.infrastructure.serializers.base.UserRepository")
     def test_data_used(
         self,
-        repository: Mock,
+        user_repository_mock: Mock,
         queryset: Mock,
         data: Dict[str, str],
         error_messages: Dict[str, List],
@@ -200,10 +199,8 @@ class TestRegisterSerializer:
         serializer when the record data already exists in the database.
         """
 
-        # Mocking the methods of the UserRepository class
-        # To control the behavior of serializer validations that use these methods
-        # We make it return a non-empty QuerySet so that validations fail
-        get_user_data: Mock = repository.get_user_data
+        # Mocking the methods
+        get_user_data: Mock = user_repository_mock.get_user_data
         user: Mock = queryset.first
         get_user_data.return_value = queryset
         user.return_value = User

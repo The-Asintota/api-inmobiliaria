@@ -1,177 +1,180 @@
 from apps.users.applications.jwt import JWTErrorMessages
 from apps.users.domain.constants import UserRoles
-from apps.users.models import User
 from apps.api_exceptions import (
     DatabaseConnectionAPIError,
     PermissionDeniedAPIError,
     AuthenticationFailedAPIError,
 )
+from tests.factory import UserFactory
+from rest_framework import status
 from django.test import Client
 from django.urls import reverse
 from unittest.mock import Mock, patch
-from typing import Tuple, Callable, Dict
+from typing import Callable
 import pytest
 
 
-@pytest.fixture
-def setUp() -> Tuple[Client, str]:
-    """
-    A fixture to set up the client and the path for the view.
-    """
-
-    return Client(), reverse(viewname="jwt_authenticate_user")
-
-
-class TestAPIView:
+@pytest.mark.django_db
+class TestAuthenticationAPIView:
     """
     This class encapsulates all the tests of the view in charge of handling
     authentication requests for users with JSON Web Token.
+
+    A successful login will generate an access token and an update token for the user,
+    provided their account is active and they have permission to authenticate using
+    JSON Web Token.
     """
 
-    @pytest.mark.django_db
-    def test_request_valid(
-        self,
-        setUp: Tuple[Client, str],
-        create_user: Callable[[bool, str, bool], Tuple[User, Dict[str, Dict]]],
-        setup_database: Callable,
+    path = reverse(viewname="jwt_authenticate_user")
+    user_factory = UserFactory
+    client = Client()
+
+    @pytest.mark.parametrize(
+        argnames="role",
+        argvalues=[UserRoles.SEARCHER.value],
+        ids=["searcher_user"],
+    )
+    def test_request_valid_data(
+        self, role: str, setup_database: Callable
     ) -> None:
         """
         This test is responsible for validating the expected behavior of the view
         when the request data is valid.
         """
 
-        # Creating a user
-        _, data = create_user(
-            active=True, role=UserRoles.SEARCHER.value, add_perm=True
+        # Creating the user data to be used in the test
+        _, data = self.user_factory.create_user(
+            role=role, active=True, save=True, add_perm=True
         )
 
         # Simulating the request
-        client, path = setUp
-        response = client.post(
-            path=path,
-            data=data["base_data"],
+        credentials = {"email": data["email"], "password": data["password"]}
+        response = self.client.post(
+            path=self.path,
+            data=credentials,
             content_type="application/json",
         )
 
         # Asserting that response data is correct
-        assert response.status_code == 200
+        assert response.status_code == status.HTTP_200_OK
         assert "access" in response.data
         assert "refresh" in response.data
 
-    @pytest.mark.django_db
-    def test_if_credentials_invalid(self, setUp: Tuple[Client, str]) -> None:
+    def test_if_credentials_invalid(self) -> None:
         """
         This test is responsible for validating the expected behavior of the view
         when the credentials provided are invalid.
         """
 
         # Simulating the request
-        client, path = setUp
-        response = client.post(
-            path=path,
-            data={"email": "user1@emial.com", "password": "contraseña1234"},
+        credentials = {"email": "user1@emial.com", "password": "contraseña1234"}
+        response = self.client.post(
+            path=self.path,
+            data=credentials,
             content_type="application/json",
         )
 
         # Asserting that response data is correct
-        assert response.status_code == AuthenticationFailedAPIError.status_code
-        assert (
-            AuthenticationFailedAPIError.default_code == response.data["code"]
-        )
-        assert (
-            JWTErrorMessages.AUTHENTICATION_FAILED.value
-            == response.data["detail"]
-        )
+        status_code_expected = AuthenticationFailedAPIError.status_code
+        response_code_expected = AuthenticationFailedAPIError.default_code
+        response_data_expected = JWTErrorMessages.AUTHENTICATION_FAILED.value
 
-    @pytest.mark.django_db
+        assert response.status_code == status_code_expected
+        assert response.data["code"] == response_code_expected
+        assert response.data["detail"] == response_data_expected
+
+    @pytest.mark.parametrize(
+        argnames="role",
+        argvalues=[UserRoles.SEARCHER.value],
+        ids=["searcher_user"],
+    )
     def test_if_inactive_user_account(
-        self,
-        setUp: Tuple[Client, str],
-        create_user: Callable[[bool, str, bool], Tuple[User, Dict[str, Dict]]],
+        self, role: str, setup_database: Callable
     ) -> None:
         """
         This test is responsible for validating the expected behavior of the view
         when the user account is inactive.
         """
 
-        # Creating a user
-        _, data = create_user(
-            active=False, role=UserRoles.SEARCHER.value, add_perm=False
+        # Creating the user data to be used in the test
+        _, data = self.user_factory.create_user(
+            role=role, active=False, save=True, add_perm=True
         )
 
         # Simulating the request
-        client, path = setUp
-        response = client.post(
-            path=path,
-            data=data["base_data"],
+        credentials = {"email": data["email"], "password": data["password"]}
+        response = self.client.post(
+            path=self.path,
+            data=credentials,
             content_type="application/json",
         )
 
         # Asserting that response data is correct
-        assert response.status_code == AuthenticationFailedAPIError.status_code
-        assert (
-            AuthenticationFailedAPIError.default_code == response.data["code"]
-        )
-        assert (
-            JWTErrorMessages.INACTIVE_ACCOUNT.value == response.data["detail"]
-        )
+        status_code_expected = AuthenticationFailedAPIError.status_code
+        response_code_expected = AuthenticationFailedAPIError.default_code
+        response_data_expected = JWTErrorMessages.INACTIVE_ACCOUNT.value
 
-    @pytest.mark.django_db
-    def test_if_user_has_not_permission(
-        self,
-        setUp: Tuple[Client, str],
-        create_user: Callable[[bool, str, bool], Tuple[User, Dict[str, Dict]]],
-    ) -> None:
+        assert response.status_code == status_code_expected
+        assert response.data["code"] == response_code_expected
+        assert response.data["detail"] == response_data_expected
+
+    @pytest.mark.parametrize(
+        argnames="role",
+        argvalues=[UserRoles.SEARCHER.value],
+        ids=["searcher_user"],
+    )
+    def test_if_user_has_not_permission(self, role: str) -> None:
         """
         This test is responsible for validating the expected behavior of the view
         when the user does not have the necessary permissions to perform the action.
         """
 
-        # Creating a user
-        _, data = create_user(
-            active=True, role=UserRoles.SEARCHER.value, add_perm=False
+        # Creating the user data to be used in the test
+        _, data = self.user_factory.create_user(
+            role=role, active=True, save=True, add_perm=False
         )
 
         # Simulating the request
-        client, path = setUp
-        response = client.post(
-            path=path,
-            data=data["base_data"],
+        credentials = {"email": data["email"], "password": data["password"]}
+        response = self.client.post(
+            path=self.path,
+            data=credentials,
             content_type="application/json",
         )
 
         # Asserting that response data is correct
-        assert response.status_code == PermissionDeniedAPIError.status_code
-        assert PermissionDeniedAPIError.default_code in response.data["code"]
-        assert (
-            PermissionDeniedAPIError.default_detail == response.data["detail"]
-        )
+        status_code_expected = PermissionDeniedAPIError.status_code
+        response_code_expected = PermissionDeniedAPIError.default_code
+        response_data_expected = PermissionDeniedAPIError.default_detail
+
+        assert response.status_code == status_code_expected
+        assert response.data["code"] == response_code_expected
+        assert response.data["detail"] == response_data_expected
 
     @patch("apps.backend.UserRepository")
-    def test_exception_raised_db(
-        self, user_repository_mock: Mock, setUp: Tuple[Client, str]
-    ) -> None:
+    def test_if_conection_db_failed(self, user_repository_mock: Mock) -> None:
         """
-        Test to check if the response is correct when an exception is raised.
+        Test that validates the expected behavior of the view when the connection to
+        the database fails.
         """
 
         # Mocking the methods
         get_user_data: Mock = user_repository_mock.get_user_data
-
-        # Setting the return values
         get_user_data.side_effect = DatabaseConnectionAPIError
 
         # Simulating the request
-        client, path = setUp
-        response = client.post(
-            path=path,
-            data={"email": "user1@emial.com", "password": "contraseña1234"},
+        credentials = {"email": "user1@emial.com", "password": "contraseña1234"}
+        response = self.client.post(
+            path=self.path,
+            data=credentials,
             content_type="application/json",
         )
 
         # Asserting that response data is correct
-        assert response.status_code == DatabaseConnectionAPIError.status_code
-        assert DatabaseConnectionAPIError.default_code in response.data["code"]
-        assert (
-            DatabaseConnectionAPIError.default_detail == response.data["detail"]
-        )
+        status_code_expected = DatabaseConnectionAPIError.status_code
+        response_code_expected = DatabaseConnectionAPIError.default_code
+        response_data_expected = DatabaseConnectionAPIError.default_detail
+
+        assert response.status_code == status_code_expected
+        assert response.data["code"] == response_code_expected
+        assert response.data["detail"] == response_data_expected

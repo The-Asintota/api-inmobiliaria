@@ -1,6 +1,6 @@
 from apps.users.infrastructure.serializers import (
+    JWTErrorMessages as SerializerErrorMessages,
     LogoutSerializer,
-    JWTSerializerErrorMessages,
 )
 from tests.factory import JWTFactory
 from rest_framework.fields import CharField
@@ -12,23 +12,26 @@ import pytest
 DEFAULT_ERROR_MESSAGES = CharField().error_messages
 
 
-class TestSerializer:
+class TestLogoutSerializer:
     """
     This class encapsulates all the tests of the serializer in charge of validating
     the data required to log out a user.
     """
 
     serializer_class = LogoutSerializer
+    jwt_factory = JWTFactory
 
-    def test_correct_execution(self) -> None:
+    def test_valid_data(self) -> None:
         """
         This test is responsible for validating the expected behavior of the
         serializer when the log out data is valid.
         """
 
-        data = JWTFactory.access_and_refresh(
-            exp_access=False, exp_refresh=False
+        # Creating JWTs to be used in the test
+        data = self.jwt_factory.access_and_refresh(
+            role="AnyUser", exp_access=False, exp_refresh=False, save=False
         )
+
         serializer = self.serializer_class(data=data["tokens"])
 
         # Check if the serializer is valid
@@ -56,31 +59,30 @@ class TestSerializer:
                     "access": JWTFactory.access_invalid(),
                 },
                 {
-                    "refresh": [
-                        JWTSerializerErrorMessages.REFRESH_INVALID.value
-                    ],
-                    "access": [JWTSerializerErrorMessages.ACCESS_INVALID.value],
+                    "refresh": [SerializerErrorMessages.REFRESH_INVALID.value],
+                    "access": [SerializerErrorMessages.ACCESS_INVALID.value],
                 },
             ),
             (
+                JWTFactory.access_and_refresh(
+                    role="AnyUser",
+                    exp_access=True,
+                    exp_refresh=True,
+                    save=False,
+                ).get("tokens"),
                 {
-                    "refresh": JWTFactory.refresh(exp=True).get("token"),
-                },
-                {
-                    "access": [DEFAULT_ERROR_MESSAGES["required"]],
-                    "refresh": [
-                        JWTSerializerErrorMessages.REFRESH_EXPIRED.value
-                    ],
+                    "access": [SerializerErrorMessages.ACCESS_EXPIRED.value],
+                    "refresh": [SerializerErrorMessages.REFRESH_EXPIRED.value],
                 },
             ),
         ],
         ids=[
             "empty_data",
             "tokens_invalid",
-            "refresh_expired",
+            "tokens_expired",
         ],
     )
-    def test_failed_execution(
+    def test_invalid_data(
         self, data: Dict[str, str], error_messages: Dict[str, List]
     ) -> None:
         """

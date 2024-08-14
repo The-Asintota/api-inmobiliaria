@@ -7,6 +7,7 @@ from apps.users.domain.constants import (
 from apps.users.domain.typing import (
     AccessToken,
     RefreshToken,
+    JSONWebToken,
     JWTPayload,
     UserUUID,
 )
@@ -14,11 +15,14 @@ from apps.users.models import User, JWT, UserManager
 from apps.emails.utils import TokenGenerator
 from apps.emails.models import Token
 from tests.utils import fake
-from rest_framework_simplejwt.utils import aware_utcnow, datetime_to_epoch
+from rest_framework_simplejwt.utils import (
+    aware_utcnow,
+    datetime_to_epoch,
+    datetime_from_epoch,
+)
 from django.contrib.auth.models import Group
 from typing import Tuple, Dict, Any
 from datetime import datetime
-from copy import deepcopy
 from jwt import encode
 from uuid import uuid4
 
@@ -48,7 +52,7 @@ class UserFactory:
         )
 
     @classmethod
-    def _assign_permissions(user: User, role: str) -> None:
+    def _assign_permissions(cls, user: User, role: str) -> None:
         """
         This method assigns the permissions of the provided role to the user.
         """
@@ -58,48 +62,87 @@ class UserFactory:
         user.save()
 
     @classmethod
-    def create_searcher_user(
+    def _get_data(cls, role: str, **data: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        This method returns the data for the user creation.
+        """
+
+        data = {
+            UserRoles.SEARCHER.value: {
+                "email": data.get("email", None) or fake.email(),
+                "password": "contraseña1234",
+                "name": "Nombre del ususario",
+                "last_name": "Apellido del usuario",
+                "cc": data.get("cc", None) or fake.random_number(digits=9),
+                "address": data.get("address", None) or fake.address(),
+                "phone_number": data.get("phone_number", None)
+                or fake.phone_number(),
+            }
+        }
+
+        return data[role]
+
+    @classmethod
+    def create_user(
         cls,
+        role: str,
         active: bool,
         add_perm: bool,
         save: bool,
         **data: Dict[str, Any],
     ) -> Tuple[User | None, Dict[str, Dict]]:
         """
+        This method creates a user with the provided data.
+        """
+
+        method_map = {
+            UserRoles.SEARCHER.value: cls.create_searcher_user,
+        }
+        user_data = cls._get_data(role=role, **data)
+
+        return method_map[role](
+            active=active, add_perm=add_perm, save=save, **user_data
+        )
+
+    @classmethod
+    def create_searcher_user(
+        cls,
+        save: bool,
+        add_perm: bool = None,
+        active: bool = None,
+        **data: Dict[str, Any],
+    ) -> Tuple[User | None, Dict[str, Dict]]:
+        """
         This method creates a searcher user with the provided data.
         """
 
-        if add_perm and not save:
-            raise ValueError(
-                "The user must be saved in order to assign permissions."
-            )
-
-        user = None
-        user_data = {
-            "base_data": {
-                "email": data.get("email", None) or fake.email(),
-                "password": data.get("password", None) or "contraseña1234",
-            },
-            "role_data": {
-                "name": data.get("name", None) or fake.name(),
-                "last_name": data.get("last_name", None) or fake.last_name(),
-                "cc": data.get("cc", None) or fake.random_number(digits=9),
-                "address": data.get("address", None) or fake.address(),
-                "phone_number": data.get("phone_number", None)
-                or fake.phone_number(),
-            },
-        }
+        data = cls._get_data(role=UserRoles.SEARCHER.value, **data)
 
         if save:
             user = cls._create_user(
-                data=deepcopy(user_data),
+                data={
+                    "base_data": {
+                        "email": data["email"],
+                        "password": data["password"],
+                    },
+                    "role_data": {
+                        "name": data["name"],
+                        "last_name": data["last_name"],
+                        "cc": data["cc"],
+                        "address": data["address"],
+                        "phone_number": data["phone_number"],
+                    },
+                },
                 active=active,
                 role=UserRoles.SEARCHER.value,
             )
-        elif add_perm:
-            cls._assign_permissions(user=user, role=UserRoles.SEARCHER.value)
 
-        return user, user_data
+            if add_perm:
+                cls._assign_permissions(
+                    user=user, role=UserRoles.SEARCHER.value
+                )
+
+        return user if save else None, data
 
 
 class TokenFactory:
@@ -127,6 +170,8 @@ class JWTFactory:
     """
     Factory for the JWT tokens.
     """
+
+    model = JWT
 
     @staticmethod
     def _get_payload(
@@ -156,8 +201,9 @@ class JWTFactory:
         cls,
         token_type: str,
         exp: datetime,
-        user_uuid: UserUUID,
         role: str,
+        save: bool,
+        user: User,
     ) -> Dict[str, Any]:
         """
         This method creates a token with the provided parameters, returning the token and the payload.
@@ -165,12 +211,16 @@ class JWTFactory:
         #### Parameters:
         - token_type: The type of token to create.
         - exp: The expiration date of the token.
-        - user_uuid: The UUID of the user.
         - role: The role of the user.
+        - user: An instance of the User model.
+        - save: If the token should be saved in the database.
         """
 
         payload = cls._get_payload(
-            token_type=token_type, exp=exp, user_uuid=user_uuid, role=role
+            user_uuid=user.uuid.__str__(),
+            token_type=token_type,
+            role=role,
+            exp=exp,
         )
         token = encode(
             payload=payload,
@@ -178,19 +228,41 @@ class JWTFactory:
             algorithm=SIMPLE_JWT["ALGORITHM"],
         )
 
+        if save:
+            cls._save(user=user, payload=payload, token=token)
+
         return {"token": token, "payload": payload}
 
     @classmethod
+    def _save(cls, user: User, payload: JWTPayload, token: JSONWebToken) -> JWT:
+        """
+        This method saves the token in the database.
+
+        #### Parameters:
+        - user: An instance of the User model.
+        - payload: The payload of the token.
+        - token: A JSONWebToken.
+        """
+
+        return cls.model.objects.create(
+            user=user,
+            jti=payload["jti"],
+            token=token,
+            expires_at=datetime_from_epoch(ts=payload["exp"]),
+        )
+
+    @classmethod
     def access(
-        cls, exp: bool, user_uuid: UserUUID = None, role: str = None
+        cls, exp: bool, role: str, save: bool, user: User = None
     ) -> Dict[str, Any]:
         """
         Creates an access token.
 
         #### Parameters:
-        - user_uuid: The UUID of the user.
+        - exp: If the token should be expired.
         - role: The role of the user.
-        - expired: If the token should be expired.
+        - save: If the token should be saved in the database.
+        - user: An instance of the User model.
         """
 
         exp_token = (
@@ -198,25 +270,28 @@ class JWTFactory:
             if exp
             else aware_utcnow() + ACCESS_TOKEN_LIFETIME
         )
+        user_obj = user if user else User()
 
         return cls._create(
             token_type="access",
-            user_uuid=user_uuid if user_uuid else uuid4().__str__(),
-            role=role if role else UserRoles.SEARCHER.value,
+            user=user_obj,
+            role=role,
             exp=exp_token,
+            save=save,
         )
 
     @classmethod
     def refresh(
-        cls, exp: bool, user_uuid: UserUUID = None, role: str = None
+        cls, exp: bool, role: str, save: bool, user: User = None
     ) -> Dict[str, Any]:
         """
         Creates a refresh token.
 
         #### Parameters:
-        - user_uuid: The UUID of the user.
+        - exp: If the token should be expired.
         - role: The role of the user.
-        - expired: If the token should be expired.
+        - save: If the token should be saved in the database.
+        - user: An instance of the User model.
         """
 
         exp_token = (
@@ -224,12 +299,14 @@ class JWTFactory:
             if exp
             else aware_utcnow() + REFRESH_TOKEN_LIFETIME
         )
+        user_obj = user if user else User()
 
         return cls._create(
             token_type="refresh",
-            user_uuid=user_uuid if user_uuid else uuid4().__str__(),
-            role=role if role else UserRoles.SEARCHER.value,
+            user=user_obj,
+            role=role,
             exp=exp_token,
+            save=save,
         )
 
     @classmethod
@@ -237,16 +314,19 @@ class JWTFactory:
         cls,
         exp_access: bool,
         exp_refresh: bool,
-        user_uuid: UserUUID = None,
-        role: str = None,
+        role: str,
+        save: bool,
+        user: User = None,
     ) -> Dict[str, Any]:
         """
         Creates an access and a refresh token.
 
         #### Parameters:
-        - user_uuid: The UUID of the user.
+        - exp_access: If the access token should be expired.
+        - exp_refresh: If the refresh token should be expired.
         - role: The role of the user.
-        - expired: If the token should be expired.
+        - save: If the token should be saved in the database.
+        - user: An instance of the User model.
         """
 
         exp_access = (
@@ -259,18 +339,22 @@ class JWTFactory:
             if exp_refresh
             else aware_utcnow() + REFRESH_TOKEN_LIFETIME
         )
-        user_uuid = user_uuid if user_uuid else uuid4().__str__()
+
+        user_obj = user if user else User()
+
         access_data = cls._create(
             token_type="access",
-            role=role if role else UserRoles.SEARCHER.value,
-            user_uuid=user_uuid,
+            user=user_obj,
+            role=role,
             exp=exp_access,
+            save=save,
         )
         refresh_data = cls._create(
             token_type="refresh",
-            role=role if role else UserRoles.SEARCHER.value,
-            user_uuid=user_uuid,
+            user=user_obj,
+            role=role,
             exp=exp_refresh,
+            save=save,
         )
 
         return {

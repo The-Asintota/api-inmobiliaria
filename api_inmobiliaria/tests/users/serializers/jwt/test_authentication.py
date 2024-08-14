@@ -6,7 +6,7 @@ from typing import Dict, List
 import pytest
 
 
-class TestSerializer:
+class TestAuthenticationSerializer:
     """
     This class encapsulates the serializer tests in charge of validating the data
     required for a user to authenticate in the system.
@@ -14,7 +14,7 @@ class TestSerializer:
 
     serializer_class = AuthenticationSerializer
 
-    def test_correct_execution(self) -> None:
+    def test_valid_data(self) -> None:
         """
         This test is responsible for validating the expected behavior of the
         serializer when the log data is valid.
@@ -64,7 +64,7 @@ class TestSerializer:
         ],
         ids=["missing_fields", "max_length_data"],
     )
-    def test_failed_execution(
+    def test_invalid_data(
         self,
         data: Dict[str, str],
         error_messages: Dict[str, List],
