@@ -19,7 +19,7 @@ class UserManager(BaseUserManager):
     instances.
     """
 
-    def __create_user(
+    def _create_user(
         self,
         related_model_name: str = None,
         role_data: Dict[str, Any] = None,
@@ -71,7 +71,7 @@ class UserManager(BaseUserManager):
 
         base_data.setdefault("is_active", is_active or False)
 
-        return self.__create_user(
+        return self._create_user(
             related_model_name=related_model_name,
             role_data=role_data,
             base_data=base_data,
@@ -101,7 +101,7 @@ class UserManager(BaseUserManager):
         base_data["email"] = email
         base_data["password"] = password
 
-        return self.__create_user(base_data=base_data)
+        return self._create_user(base_data=base_data)
 
 
 class User(AbstractBaseUser, PermissionsMixin):

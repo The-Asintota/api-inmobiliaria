@@ -43,11 +43,11 @@ class JWTUsesCases:
         jwt_repository: IJWTRepository = None,
         user_repository: IUserRepository = None,
     ) -> None:
-        self.__user_repository = user_repository
-        self.__jwt_repository = jwt_repository
-        self.__jwt_class = jwt_class
+        self._user_repository = user_repository
+        self._jwt_repository = jwt_repository
+        self._jwt_class = jwt_class
 
-    def __is_token_recent(
+    def _is_token_recent(
         self,
         user: User,
         access_payload: JWTPayload,
@@ -66,7 +66,7 @@ class JWTUsesCases:
         - JWTAPIError: If the tokens do not match the user's last tokens.
         """
 
-        latest_tokens = self.__jwt_repository.get(user=user)
+        latest_tokens = self._jwt_repository.get(user=user)
 
         if latest_tokens.count() < 2:
             raise ResourceNotFoundAPIError(
@@ -115,7 +115,7 @@ class JWTUsesCases:
         ):
             raise PermissionDeniedAPIError()
 
-        access, refresh = self.__jwt_class.get_token(user=user)
+        access, refresh = self._jwt_class.get_token(user=user)
 
         return {"access": access, "refresh": refresh}
 
@@ -132,7 +132,7 @@ class JWTUsesCases:
         - ResourceNotFoundAPIError: If the user does not exist.
         """
 
-        user = self.__user_repository.get_user_data(
+        user = self._user_repository.get_user_data(
             uuid=data["access"]["user_uuid"],
             is_active=True,
             is_deleted=False,
@@ -144,7 +144,7 @@ class JWTUsesCases:
                 detail=JWTErrorMessages.USER_NOT_FOUND.value,
             )
 
-        tokens = self.__is_token_recent(
+        tokens = self._is_token_recent(
             access_payload=data["access"],
             refresh_payload=data["refresh"],
             user=user,
@@ -152,9 +152,9 @@ class JWTUsesCases:
 
         for token in tokens:
             if not token.is_expired():
-                self.__jwt_repository.add_to_blacklist(token=token)
+                self._jwt_repository.add_to_blacklist(token=token)
 
-        access, refresh = self.__jwt_class.get_token(user=user)
+        access, refresh = self._jwt_class.get_token(user=user)
 
         return {"access": access, "refresh": refresh}
 
@@ -169,7 +169,7 @@ class JWTUsesCases:
         - ResourceNotFoundAPIError: If the user does not exist.
         """
 
-        user = self.__user_repository.get_user_data(
+        user = self._user_repository.get_user_data(
             uuid=data["access"]["user_uuid"],
             is_active=True,
             is_deleted=False,
@@ -181,7 +181,7 @@ class JWTUsesCases:
                 detail=JWTErrorMessages.USER_NOT_FOUND.value,
             )
 
-        tokens = self.__is_token_recent(
+        tokens = self._is_token_recent(
             access_payload=data["access"],
             refresh_payload=data["refresh"],
             user=user,
@@ -189,4 +189,4 @@ class JWTUsesCases:
 
         for token in tokens:
             if not token.is_expired():
-                self.__jwt_repository.add_to_blacklist(token=token)
+                self._jwt_repository.add_to_blacklist(token=token)

@@ -31,7 +31,7 @@ class AuthenticationAPIView(TokenObtainPairView):
     serializer_class = AuthenticationSerializer
     application_class = JWTUsesCases
 
-    def __handle_valid_request(self, data: Dict[str, Any]) -> Response:
+    def _handle_valid_request(self, data: Dict[str, Any]) -> Response:
         tokens = self.application_class(
             jwt_class=TokenObtainPairSerializer,
         ).authenticate_user(credentials=data)
@@ -43,7 +43,7 @@ class AuthenticationAPIView(TokenObtainPairView):
         )
 
     @staticmethod
-    def __handle_invalid_request(errors: List[Dict[str, List]]) -> Response:
+    def _handle_invalid_request(errors: List[Dict[str, List]]) -> Response:
 
         return Response(
             data={
@@ -68,9 +68,9 @@ class AuthenticationAPIView(TokenObtainPairView):
         serializer = self.serializer_class(data=request.data)
 
         if serializer.is_valid():
-            return self.__handle_valid_request(data=serializer.validated_data)
+            return self._handle_valid_request(data=serializer.validated_data)
 
-        return self.__handle_invalid_request(errors=serializer.errors)
+        return self._handle_invalid_request(errors=serializer.errors)
 
 
 class UpdateTokenAPIView(generics.GenericAPIView):

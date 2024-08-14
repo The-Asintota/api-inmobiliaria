@@ -19,7 +19,7 @@ from typing import Dict, Any, Tuple
 from enum import Enum
 
 
-class JWTSerializerErrorMessages(Enum):
+class JWTErrorMessages(Enum):
     """
     Enum class for error messages related to serializers for JWTs.
     """
@@ -27,6 +27,7 @@ class JWTSerializerErrorMessages(Enum):
     REFRESH_INVALID = "Refresh token invalid."
     REFRESH_EXPIRED = "Refresh token has expired."
     ACCESS_INVALID = "Access token invalid."
+    ACCESS_EXPIRED = "Access token has expired."
     ACCESS_NOT_EXPIRED = "Access token is not expired."
     USER_NOT_MATCH = "The user of the access token does not match the user of the refresh token."
 
@@ -64,7 +65,7 @@ class TokenObtainPairSerializer(BaseTokenSerializer):
     custom payload.
     """
 
-    __jwt_repository = JWTRepository
+    _jwt_repository = JWTRepository
 
     @classmethod
     def get_token(cls, user: User) -> Tuple[AccessToken, RefreshToken]:
@@ -78,7 +79,7 @@ class TokenObtainPairSerializer(BaseTokenSerializer):
         access = token.access_token
 
         for token in [refresh, access]:
-            cls.__jwt_repository.add_to_checklist(
+            cls._jwt_repository.add_to_checklist(
                 token=token,
                 payload=token.payload,
                 user=user,
@@ -111,12 +112,12 @@ class BaseUpdateLogoutSerializer(serializers.Serializer):
         except ExpiredSignatureError:
             raise serializers.ValidationError(
                 code=JWTAPIError.default_code,
-                detail=JWTSerializerErrorMessages.REFRESH_EXPIRED.value,
+                detail=JWTErrorMessages.REFRESH_EXPIRED.value,
             )
         except DecodeError:
             raise serializers.ValidationError(
                 code=JWTAPIError.default_code,
-                detail=JWTSerializerErrorMessages.REFRESH_INVALID.value,
+                detail=JWTErrorMessages.REFRESH_INVALID.value,
             )
 
         return self.refresh_payload
@@ -138,7 +139,7 @@ class BaseUpdateLogoutSerializer(serializers.Serializer):
                 code=JWTAPIError.default_code,
                 detail={
                     "access": [
-                        JWTSerializerErrorMessages.USER_NOT_MATCH.value,
+                        JWTErrorMessages.USER_NOT_MATCH.value,
                     ]
                 },
             )
@@ -169,12 +170,12 @@ class UpdateTokenSerializer(BaseUpdateLogoutSerializer):
         except DecodeError:
             raise serializers.ValidationError(
                 code=JWTAPIError.default_code,
-                detail=JWTSerializerErrorMessages.ACCESS_INVALID.value,
+                detail=JWTErrorMessages.ACCESS_INVALID.value,
             )
 
         raise serializers.ValidationError(
             code=JWTAPIError.default_code,
-            detail=JWTSerializerErrorMessages.ACCESS_NOT_EXPIRED.value,
+            detail=JWTErrorMessages.ACCESS_NOT_EXPIRED.value,
         )
 
 
@@ -191,13 +192,16 @@ class LogoutSerializer(BaseUpdateLogoutSerializer):
 
         try:
             if not self.access_payload:
-                self.access_payload = decode_jwt(
-                    token=value, options={"verify_exp": False}
-                )
+                self.access_payload = decode_jwt(token=value)
+        except ExpiredSignatureError:
+            raise serializers.ValidationError(
+                code=JWTAPIError.default_code,
+                detail=JWTErrorMessages.ACCESS_EXPIRED.value,
+            )
         except DecodeError:
             raise serializers.ValidationError(
                 code=JWTAPIError.default_code,
-                detail=JWTSerializerErrorMessages.ACCESS_INVALID.value,
+                detail=JWTErrorMessages.ACCESS_INVALID.value,
             )
 
         return self.access_payload

@@ -7,5 +7,5 @@ from .jwt import (
     TokenObtainPairSerializer,
     UpdateTokenSerializer,
     LogoutSerializer,
-    JWTSerializerErrorMessages,
+    JWTErrorMessages,
 )

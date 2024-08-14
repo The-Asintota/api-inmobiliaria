@@ -12,7 +12,7 @@ class UserRepository:
     operations or queries related to a user.
     """
 
-    __model = User
+    model = User
 
     @classmethod
     def create(cls, data: Dict[str, Any], role: str, is_active: bool) -> User:
@@ -29,7 +29,7 @@ class UserRepository:
         database.
         """
 
-        user_manager: UserManager = cls.__model.objects
+        user_manager: UserManager = cls.model.objects
 
         try:
             user = user_manager.create_user(
@@ -60,7 +60,7 @@ class UserRepository:
 
         try:
             user_list = (
-                cls.__model.objects.select_related("content_type")
+                cls.model.objects.select_related("content_type")
                 .defer(
                     "password",
                     "last_login",
