@@ -1,157 +1,135 @@
-from apps.users.domain.constants import UserRoles
-from apps.users.domain.typing import UserUUID
-from apps.users.models import User
 from apps.emails.applications import ActivationErrors
 from apps.api_exceptions import (
     DatabaseConnectionAPIError,
     ResourceNotFoundAPIError,
     AccountActivationAPIError,
 )
+from tests.factory import UserFactory
+from rest_framework import status
 from django.test import Client
 from django.urls import reverse
 from unittest.mock import Mock, patch
-from typing import Callable, Tuple, Dict
 from uuid import uuid4
 import pytest
 
 
-@pytest.fixture
-def setUp() -> Callable[[UserUUID, str], Tuple[Client, str]]:
-    """
-    A fixture to set up the client and the path for the view.
-    """
-
-    def get_data_request(
-        user_uuid: UserUUID, viewname: str
-    ) -> Tuple[Client, str]:
-
-        return Client(), reverse(
-            viewname=viewname, kwargs={"user_uuid": user_uuid}
-        )
-
-    return get_data_request
-
-
+@pytest.mark.django_db
 class TestSendAccountActivationTokenAPIView:
     """
     This class encapsulates all tests for the view responsible for sending the account
     activation email to a user.
     """
 
-    viewname = "send_activation_mail"
+    user_factory = UserFactory
+    client = Client()
 
-    @pytest.mark.django_db
-    def test_request_valid(
-        self,
-        setUp: Callable[[UserUUID, str], Tuple[Client, str]],
-        create_user: Callable[[bool, str, bool], Tuple[User, Dict[str, Dict]]],
-    ) -> None:
+    def _get_path(self, **url_params) -> str:
+        """
+        This method returns the data needed to make a request to the view.
+        """
+
+        return reverse(
+            viewname="send_activation_mail",
+            kwargs={"user_uuid": url_params["user_uuid"]},
+        )
+
+    def test_request_valid_data(self) -> None:
         """
         This test is responsible for validating the expected behavior of the view
         when the request data is valid.
         """
 
-        # Creating a user
-        user, _ = create_user(
-            active=False, role=UserRoles.SEARCHER.value, add_perm=False
+        # Creating the user to be used in the test
+        user, _ = self.user_factory.create_searcher_user(
+            active=False, add_perm=False, save=True
         )
 
         # Simulating the request
-        client, path = setUp(viewname=self.viewname, user_uuid=user.uuid)
-        response = client.get(
-            path=path,
+        response = self.client.get(
+            path=self._get_path(user_uuid=user.uuid),
             content_type="application/json",
         )
 
         # Asserting that response data is correct
-        assert response.status_code == 200
+        assert response.status_code == status.HTTP_200_OK
 
-    def test_request_invalid(
-        self,
-        setUp: Callable[[UserUUID, str], Tuple[Client, str]],
-    ) -> None:
+    def test_request_invalid_data(self) -> None:
         """
         This test is responsible for validating the expected behavior of the view
         when the request data is invalid.
         """
 
         # Simulating the request
-        client, path = setUp(viewname=self.viewname, user_uuid="123456789")
-        response = client.get(
-            path=path,
+        response = self.client.get(
+            path=self._get_path(user_uuid="123456789"),
             content_type="application/json",
         )
 
         # Asserting that response data is correct
-        assert response.status_code == 400
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    @pytest.mark.django_db
-    def test_if_user_not_found(
-        self,
-        setUp: Callable[[UserUUID, str], Tuple[Client, str]],
-    ) -> None:
+    def test_if_user_not_found(self) -> None:
         """
         This test is responsible for validating the expected behavior of the view
         when the user is not found in the database.
         """
 
         # Simulating the request
-        client, path = setUp(viewname=self.viewname, user_uuid=uuid4())
-        response = client.get(
-            path=path,
+        response = self.client.get(
+            path=self._get_path(user_uuid=uuid4()),
             content_type="application/json",
         )
 
         # Asserting that response data is correct
-        assert response.status_code == ResourceNotFoundAPIError.status_code
-        assert response.data["code"] == "user_not_found"
-        assert response.data["detail"] == ActivationErrors.USER_NOT_FOUND.value
+        status_code_expected = ResourceNotFoundAPIError.status_code
+        response_code_expected = "user_not_found"
+        response_data_expected = ActivationErrors.USER_NOT_FOUND.value
 
-    @pytest.mark.django_db
-    def test_if_user_already_active(
-        self,
-        setUp: Callable[[UserUUID, str], Tuple[Client, str]],
-        create_user: Callable[[bool, str, bool], Tuple[User, Dict[str, Dict]]],
-    ) -> None:
+        assert response.status_code == status_code_expected
+        assert response.data["code"] == response_code_expected
+        assert response.data["detail"] == response_data_expected
+
+    def test_if_user_already_active(self) -> None:
         """
         This test is responsible for validating the expected behavior of the view
         when the user is already active.
         """
 
-        # Creating a user
-        user, _ = create_user(
-            active=True, role=UserRoles.SEARCHER.value, add_perm=False
+        # Creating the user to be used in the test
+        user, _ = self.user_factory.create_searcher_user(
+            active=True, add_perm=False, save=True
         )
 
         # Simulating the request
-        client, path = setUp(viewname=self.viewname, user_uuid=user.uuid)
-        response = client.get(
-            path=path,
+        response = self.client.get(
+            path=self._get_path(user_uuid=user.uuid),
             content_type="application/json",
         )
 
         # Asserting that response data is correct
-        assert response.status_code == AccountActivationAPIError.status_code
-        assert response.data["code"] == AccountActivationAPIError.default_code
-        assert response.data["detail"] == ActivationErrors.ACTIVE_ACCOUNT.value
+        status_code_expected = AccountActivationAPIError.status_code
+        response_code_expected = AccountActivationAPIError.default_code
+        response_data_expected = ActivationErrors.ACTIVE_ACCOUNT.value
 
-    @pytest.mark.django_db
+        assert response.status_code == status_code_expected
+        assert response.data["code"] == response_code_expected
+        assert response.data["detail"] == response_data_expected
+
     @patch(
         "apps.emails.infrastructure.views.account_management.send_token.TokenRepository"
     )
-    def test_if_db_connection_fails(
+    def test_if_conection_db_failed(
         self,
         token_repository_mock: Mock,
-        setUp: Callable[[UserUUID, str], Tuple[Client, str]],
-        create_user: Callable[[bool, str, bool], Tuple[User, Dict[str, Dict]]],
     ) -> None:
         """
-        Test to check if the response is correct when an exception is raised.
+        Test that validates the expected behavior of the view when the connection to
+        the database fails.
         """
 
-        # Creating a user
-        user, _ = create_user(
-            active=False, role=UserRoles.SEARCHER.value, add_perm=False
+        # Creating the user to be used in the test
+        user, _ = self.user_factory.create_searcher_user(
+            active=False, add_perm=False, save=True
         )
 
         # Mocking the methods
@@ -159,15 +137,16 @@ class TestSendAccountActivationTokenAPIView:
         create.side_effect = DatabaseConnectionAPIError
 
         # Simulating the request
-        client, path = setUp(viewname=self.viewname, user_uuid=user.uuid)
-        response = client.get(
-            path=path,
+        response = self.client.get(
+            path=self._get_path(user_uuid=user.uuid),
             content_type="application/json",
         )
 
         # Asserting that response data is correct
-        assert response.status_code == DatabaseConnectionAPIError.status_code
-        assert response.data["code"] == DatabaseConnectionAPIError.default_code
-        assert (
-            response.data["detail"] == DatabaseConnectionAPIError.default_detail
-        )
+        status_code_expected = DatabaseConnectionAPIError.status_code
+        response_code_expected = DatabaseConnectionAPIError.default_code
+        response_data_expected = DatabaseConnectionAPIError.default_detail
+
+        assert response.status_code == status_code_expected
+        assert response.data["code"] == response_code_expected
+        assert response.data["detail"] == response_data_expected

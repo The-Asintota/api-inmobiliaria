@@ -4,7 +4,6 @@ from apps.emails.domain.constants import TOKEN_EXPIRATION
 from apps.emails.models import Token
 from apps.emails.utils import TokenGenerator
 from apps.users.infrastructure.db import UserRepository
-from apps.users.domain.constants import UserRoles
 from apps.users.models import User
 from apps.api_exceptions import (
     AccountActivationAPIError,
@@ -12,16 +11,17 @@ from apps.api_exceptions import (
     DatabaseConnectionAPIError,
 )
 from apps.view_exceptions import ResourceNotFoundViewError, TokenViewError
+from tests.factory import UserFactory
 from tests.utils import empty_queryset
 from django.test import RequestFactory
 from django.core import mail
-from typing import Tuple, Callable, Dict
 from unittest.mock import Mock
-from uuid import uuid4
 from datetime import timedelta
+from uuid import uuid4
 import pytest
 
 
+@pytest.mark.django_db
 class TestApplicationSendMail:
     """
     This class encapsulates the tests for the use case responsible for sending the
@@ -29,20 +29,17 @@ class TestApplicationSendMail:
     """
 
     application_class = AccountActivation
+    user_factory = UserFactory
 
-    @pytest.mark.django_db
-    def test_send_success(
-        self,
-        create_user: Callable[[bool, str, bool], Tuple[User, Dict[str, Dict]]],
-    ) -> None:
+    def test_send_success(self) -> None:
         """
         This test is responsible for validating the expected behavior of the
         `send_email` method when the user data is valid.
         """
 
-        # Creating a user
-        user, _ = create_user(
-            active=False, role=UserRoles.SEARCHER.value, add_perm=False
+        # Creating the user data to be used in the test
+        user, _ = self.user_factory.create_searcher_user(
+            is_active=False, save=True, add_perm=False
         )
 
         # Instantiating the application and calling the method
@@ -55,8 +52,7 @@ class TestApplicationSendMail:
         assert len(mail.outbox) == 1
         assert Token.objects.count() == 1
 
-    @pytest.mark.django_db
-    def test_is_user_is_none(self) -> None:
+    def test_is_user_not_found(self) -> None:
         """
         This test is responsible for validating the expected behavior of the
         `send_email` method when the user data is invalid.
@@ -72,7 +68,6 @@ class TestApplicationSendMail:
         assert len(mail.outbox) == 0
         assert Token.objects.count() == 0
 
-    @pytest.mark.django_db
     def test_if_user_already_active(self) -> None:
         """
         This test is responsible for validating the expected behavior of the
@@ -96,11 +91,10 @@ class TestApplicationSendMail:
         assert len(mail.outbox) == 0
         assert Token.objects.count() == 0
 
-    @pytest.mark.django_db
-    def test_if_db_connection_fails(self, token_repository: Mock) -> None:
+    def test_if_conection_db_failed(self, token_repository: Mock) -> None:
         """
-        This test is responsible for validating the expected behavior of the
-        `send_email` method when the database connection fails.
+        Test that validates the expected behavior of the view when the connection to
+        the database fails.
         """
 
         # Mocking the methods
@@ -125,6 +119,7 @@ class TestApplicationSendMail:
         assert Token.objects.count() == 0
 
 
+@pytest.mark.django_db
 class TestApplicationCheckToken:
     """
     This class encapsulates the tests for the use case responsible for checking the
@@ -132,20 +127,17 @@ class TestApplicationCheckToken:
     """
 
     application_class = AccountActivation
+    user_factory = UserFactory
 
-    @pytest.mark.django_db
-    def test_check_token_success(
-        self,
-        create_user: Callable[[bool, str, bool], Tuple[User, Dict[str, Dict]]],
-    ) -> None:
+    def test_check_token_success(self) -> None:
         """
         This test is responsible for validating the expected behavior of the
         `check_token` method when the token is valid.
         """
 
-        # Creating the user and the token
-        user, _ = create_user(
-            active=False, role=UserRoles.SEARCHER.value, add_perm=False
+        # Creating the user and token to be used in the test
+        user, _ = self.user_factory.create_searcher_user(
+            is_active=False, save=True, add_perm=False
         )
         token = TokenGenerator().make_token(user=user)
         Token.objects.create(token=token)
@@ -164,6 +156,7 @@ class TestApplicationCheckToken:
 
         # Asserting that the user is active
         user = User.objects.get(uuid=user.uuid)
+
         assert user.is_active
 
     def test_if_user_not_found(self, user_repository: Mock) -> None:
@@ -191,19 +184,15 @@ class TestApplicationCheckToken:
                 request=RequestFactory().post("/"),
             )
 
-    @pytest.mark.django_db
-    def test_if_token_expired(
-        self,
-        create_user: Callable[[bool, str, bool], Tuple[User, Dict[str, Dict]]],
-    ) -> None:
+    def test_if_token_expired(self) -> None:
         """
         This test is responsible for validating the expected behavior of the
         `check_token` method when the token is expired.
         """
 
-        # Creating the user and the token
-        user, _ = create_user(
-            active=False, role=UserRoles.SEARCHER.value, add_perm=False
+        # Creating the user and token to be used in the test
+        user, _ = self.user_factory.create_searcher_user(
+            is_active=False, save=True, add_perm=False
         )
         token = TokenGenerator().make_token(user=user)
         token_obj = Token.objects.create(token=token)
@@ -227,24 +216,21 @@ class TestApplicationCheckToken:
 
         # Asserting that the user is not active
         user = User.objects.get(uuid=user.uuid)
+
         assert not user.is_active
 
-    @pytest.mark.django_db
-    def test_if_token_invalid(
-        self,
-        create_user: Callable[[bool, str, bool], Tuple[User, Dict[str, Dict]]],
-    ) -> None:
+    def test_if_token_invalid(self) -> None:
         """
         This test is responsible for validating the expected behavior of the
         `check_token` method when the token is invalid.
         """
 
-        # Creating the user and the token
-        user_1, _ = create_user(
-            active=False, role=UserRoles.SEARCHER.value, add_perm=False
+        # Creating the user and token to be used in the test
+        user_1, _ = self.user_factory.create_searcher_user(
+            is_active=False, save=True, add_perm=False
         )
-        user_2, _ = create_user(
-            active=False, role=UserRoles.SEARCHER.value, add_perm=False
+        user_2, _ = self.user_factory.create_searcher_user(
+            is_active=False, save=True, add_perm=False
         )
         token = TokenGenerator().make_token(user=user_2)
         Token.objects.create(token=token)
@@ -264,23 +250,20 @@ class TestApplicationCheckToken:
 
         # Asserting that the user is not active
         user = User.objects.get(uuid=user_1.uuid)
+
         assert not user.is_active
 
-    @pytest.mark.django_db
-    def test_if_db_connection_fails(
-        self,
-        user_repository: Mock,
-        token_repository: Mock,
-        create_user: Callable[[bool, str, bool], Tuple[User, Dict[str, Dict]]],
+    def test_if_conection_db_failed(
+        self, user_repository: Mock, token_repository: Mock
     ) -> None:
         """
-        This test is responsible for validating the expected behavior of the
-        `check_token` method when the database connection fails.
+        Test that validates the expected behavior of the view when the connection to
+        the database fails.
         """
 
-        # Creating the user and the token
-        user, _ = create_user(
-            active=False, role=UserRoles.SEARCHER.value, add_perm=False
+        # Creating the user to be used in the test
+        user, _ = self.user_factory.create_searcher_user(
+            is_active=False, save=True, add_perm=False
         )
 
         # Mocking the methods
@@ -308,4 +291,5 @@ class TestApplicationCheckToken:
 
             # Asserting that the user is not active
             user = User.objects.get(uuid=user.uuid)
+
             assert not user.is_active
