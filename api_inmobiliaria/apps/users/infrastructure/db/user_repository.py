@@ -3,7 +3,7 @@ from apps.api_exceptions import DatabaseConnectionAPIError
 from django.contrib.contenttypes.models import ContentType
 from django.db import OperationalError
 from django.db.models import QuerySet, Model
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 
 class UserRepository:
@@ -79,14 +79,17 @@ class UserRepository:
 
     @classmethod
     def get_role_data(
-        cls, user: User = None, role: str = None, **filters
+        cls,
+        model_user: Optional[User] = None,
+        role: Optional[str] = None,
+        **filters,
     ) -> QuerySet[Model]:
         """
         Retrieves the related data of a user role from the database according to
         the provided filters.
 
         #### Parameters:
-        - user: User instance from which to retrieve the related data.
+        - model_user: User instance from which to retrieve the related data.
         - role: Role of the user from which to retrieve the related data.
         - filters: Keyword arguments that define the filters to apply.
 
@@ -96,8 +99,8 @@ class UserRepository:
         - ValueError: If the 'user' or 'role' parameter is not provided.
         """
 
-        if user:
-            related_model = user.content_type.model_class()
+        if model_user:
+            related_model = model_user.content_type.model_class()
         elif role:
             content_type = ContentType.objects.get(model=role)
             related_model = content_type.model_class()

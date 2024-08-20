@@ -44,14 +44,17 @@ class IUserRepository(Protocol):
 
     @classmethod
     def get_role_data(
-        cls, user: Optional[User], role: Optional[str], **filters
+        cls,
+        model_user: Optional[User] = None,
+        role: Optional[str] = None,
+        **filters,
     ) -> QuerySet[Model]:
         """
-        Retrieves the related data of a user profile from the database according to
+        Retrieves the related data of a user role from the database according to
         the provided filters.
 
         #### Parameters:
-        - user: User instance from which to retrieve the related data.
+        - model_user: User instance from which to retrieve the related data.
         - role: Role of the user from which to retrieve the related data.
         - filters: Keyword arguments that define the filters to apply.
 
