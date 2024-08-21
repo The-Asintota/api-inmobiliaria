@@ -5,7 +5,6 @@ from rest_framework import serializers
 from django.core.validators import RegexValidator
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
-from typing import Dict
 
 
 class BaseUserDataSerializer(ErrorMessagesSerializer):
@@ -48,9 +47,6 @@ class BaseUserDataSerializer(ErrorMessagesSerializer):
             ),
         },
     )
-    confirm_password = serializers.CharField(
-        required=True, write_only=True, style={"input_type": "password"}
-    )
 
     def validate_email(self, value: str) -> str:
         """
@@ -87,23 +83,3 @@ class BaseUserDataSerializer(ErrorMessagesSerializer):
             )
 
         return value
-
-    def validate(self, data: Dict[str, str]) -> Dict[str, str]:
-        """
-        Check if the password and confirm password match.
-        """
-
-        password = data["password"]
-        confirm_password = data["confirm_password"]
-
-        if not password == confirm_password:
-            raise serializers.ValidationError(
-                code="invalid_data",
-                detail={
-                    "confirm_password": [
-                        ERROR_MESSAGES["password_mismatch"],
-                    ]
-                },
-            )
-
-        return data

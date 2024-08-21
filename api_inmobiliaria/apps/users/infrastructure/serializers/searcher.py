@@ -4,13 +4,15 @@ from apps.users.infrastructure.schemas.searcher import (
     SearcherRegisterSerializerSchema,
 )
 from apps.users.domain.constants import UserRoles, SearcherProperties
+from apps.users.models import User, Searcher
 from apps.utils.messages import ErrorMessagesSerializer, ERROR_MESSAGES
 from rest_framework import serializers
 from django.core.validators import RegexValidator
 from phonenumber_field.serializerfields import PhoneNumberField
+from typing import Dict, Any
 
 
-class SearcherDataSerializer(ErrorMessagesSerializer):
+class RoleDataSerializer(ErrorMessagesSerializer):
     """
     Defines the fields that are required for the searcher user profile.
     """
@@ -128,7 +130,7 @@ class SearcherDataSerializer(ErrorMessagesSerializer):
 
 
 @SearcherRegisterSerializerSchema
-class SearcherRegisterSerializer(BaseUserDataSerializer):
+class SearcherRegisterUserSerializer(BaseUserDataSerializer):
     """
     Defines the fields that are required for the searcher user registration.
     """
@@ -165,3 +167,50 @@ class SearcherRegisterSerializer(BaseUserDataSerializer):
             ),
         ],
     )
+    confirm_password = serializers.CharField(
+        required=True, write_only=True, style={"input_type": "password"}
+    )
+
+    def validate(self, data: Dict[str, str]) -> Dict[str, str]:
+        """
+        Check if the password and confirm password match.
+        """
+
+        password = data["password"]
+        confirm_password = data["confirm_password"]
+
+        if not password == confirm_password:
+            raise serializers.ValidationError(
+                code="invalid_data",
+                detail={
+                    "confirm_password": [
+                        ERROR_MESSAGES["password_mismatch"],
+                    ]
+                },
+            )
+
+        return data
+
+
+class SearcherUserReadOnlySerializer(serializers.Serializer):
+    """
+    Defines the fields of the searcher user information for reading.
+    """
+
+    def __init__(self, role_instance: Searcher, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.role_instance = role_instance
+
+    def to_representation(self, instance: User) -> Dict[str, Any]:
+
+        return {
+            "base_data": {"email": instance.email},
+            "role_data": {
+                "name": self.role_instance.name,
+                "last_name": self.role_instance.last_name,
+                "cc": self.role_instance.cc,
+                "address": self.role_instance.address,
+                "phone_number": self.role_instance.phone_number,
+                "is_phone_verified": self.role_instance.is_phone_verified,
+            },
+        }

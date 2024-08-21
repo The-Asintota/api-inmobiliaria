@@ -1,21 +1,24 @@
 from apps.users.infrastructure.db import UserRepository
 from apps.users.infrastructure.serializers import (
-    SearcherRegisterSerializer,
+    SearcherRegisterUserSerializer,
+    SearcherUserReadOnlySerializer,
 )
 from apps.users.infrastructure.schemas.searcher import (
     SearcherRegisterSchema,
 )
-from apps.users.applications import RegisterUser
+from apps.users.applications import RegisterUser, UserDataManager
 from apps.utils.views import MethodHTTPMapped, PermissionMixin
+from apps.permissions import IsJWTOwner
+from authentication.jwt import JWTAuthentication
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.serializers import Serializer
 from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework.generics import GenericAPIView
 from rest_framework import status
-from typing import Dict, Any, List
 
 
-class SearcherUserAPIView(MethodHTTPMapped, PermissionMixin, GenericAPIView):
+class RegisterSearcherAPIView(GenericAPIView):
     """
     API view for managing operations for users with `searcher role`.
 
@@ -23,33 +26,10 @@ class SearcherUserAPIView(MethodHTTPMapped, PermissionMixin, GenericAPIView):
     permissions, and serializers based on the HTTP method of the incoming request.
     """
 
-    application_mapping = {
-        "POST": RegisterUser,
-    }
-    authentication_mapping = {
-        "POST": [],
-    }
-    permission_mapping = {
-        "POST": [],
-    }
-    serializer_mapping = {
-        "POST": SearcherRegisterSerializer,
-    }
-
-    @staticmethod
-    def _handle_invalid_request_data(errors: List[Dict[str, Any]]) -> Response:
-        """
-        Handle an invalid request by returning a response with error details.
-        """
-
-        return Response(
-            data={
-                "code": "invalid_request_data",
-                "detail": errors,
-            },
-            status=status.HTTP_400_BAD_REQUEST,
-            content_type="application/json",
-        )
+    authentication_classes = []
+    permission_classes = []
+    application_class = RegisterUser
+    serializer_class = SearcherRegisterUserSerializer
 
     @SearcherRegisterSchema
     def post(self, request: Request, *args, **kwargs) -> Response:
@@ -63,15 +43,60 @@ class SearcherUserAPIView(MethodHTTPMapped, PermissionMixin, GenericAPIView):
         their account.
         """
 
-        serializer_class = self.get_serializer_class()
-        serializer: Serializer = serializer_class(data=request.data)
+        serializer = self.serializer_class(data=request.data)
 
         if not serializer.is_valid():
-            return self._handle_invalid_request_data(errors=serializer.errors)
+            return Response(
+                data={
+                    "code": "invalid_request_data",
+                    "detail": serializer.errors,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+                content_type="application/json",
+            )
 
-        register: RegisterUser = self.get_application_class(
-            user_repository=UserRepository
-        )
+        register = self.application_class(user_repository=UserRepository)
         register.searcher(data=serializer.validated_data, request=request)
 
         return Response(status=status.HTTP_201_CREATED)
+
+
+class SearcherAPIView(MethodHTTPMapped, PermissionMixin, GenericAPIView):
+    """
+    API view for managing operations for users with `searcher role`.
+
+    It uses a mapping approach to determine the appropriate application logic,
+    permissions, and serializers based on the HTTP method of the incoming request.
+    """
+
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated, IsJWTOwner]
+    application_mapping = {"GET": UserDataManager}
+    serializer_mapping = {
+        "GET": SearcherUserReadOnlySerializer,
+    }
+
+    def get(self, request: Request, *args, **kwargs) -> Response:
+        """
+        Handle GET requests to obtain user information.
+
+        This method allows the user account information to be returned based on the
+        'user_uuid' indicated in the request path, without revealing sensitive
+        information.
+        """
+
+        app: UserDataManager = self.get_application_class(
+            user_repository=UserRepository
+        )
+        role_user = app.get(user_model=request.user)
+
+        serializer_class = self.get_serializer_class()
+        serializer: Serializer = serializer_class(
+            instance=request.user, role_instance=role_user
+        )
+
+        return Response(
+            data=serializer.data,
+            status=status.HTTP_200_OK,
+            content_type="application/json",
+        )

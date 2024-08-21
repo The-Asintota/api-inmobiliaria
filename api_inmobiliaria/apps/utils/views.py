@@ -6,7 +6,7 @@ from rest_framework.serializers import Serializer
 from rest_framework.request import Request
 from rest_framework.permissions import BasePermission
 from rest_framework.generics import GenericAPIView
-from typing import Dict, List, Any, Callable
+from typing import Dict, List, Any, Callable, Optional
 
 
 class MethodHTTPMapped:
@@ -46,7 +46,7 @@ class MethodHTTPMapped:
                 self.request.method
             ]
         except (AttributeError, KeyError):
-            return []
+            return [auth() for auth in self.authentication_classes]
 
         return [auth() for auth in authentication_classes]
 
@@ -59,7 +59,7 @@ class MethodHTTPMapped:
         try:
             permission_classes = self.permission_mapping[self.request.method]
         except (AttributeError, KeyError):
-            return []
+            return [permission() for permission in self.permission_classes]
 
         return [permission() for permission in permission_classes]
 
@@ -69,7 +69,10 @@ class MethodHTTPMapped:
         request based on the HTTP method.
         """
 
-        return self.serializer_mapping[self.request.method]
+        try:
+            return self.serializer_mapping[self.request.method]
+        except (AttributeError, KeyError):
+            return self.serializer_class
 
     def get_application_class(self, **dependencies: Any):
         """
@@ -80,9 +83,12 @@ class MethodHTTPMapped:
         - dependencies: Any dependencies that the application class requires.
         """
 
-        application_class = self.application_mapping[self.request.method]
+        try:
+            application_class = self.application_mapping[self.request.method]
 
-        return application_class(**dependencies)
+            return application_class(**dependencies)
+        except (AttributeError, KeyError):
+            return self.application_class
 
 
 class PermissionMixin:
