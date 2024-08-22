@@ -5,11 +5,13 @@ from apps.users.domain.constants import (
     UserRoles,
 )
 from apps.utils.messages import ERROR_MESSAGES, JWTErrorMessages
+from apps.permissions import IsJWTOwner
 from apps.api_exceptions import (
-    JWTAPIError,
     PermissionDeniedAPIError,
     DatabaseConnectionAPIError,
     AuthenticationFailedAPIError,
+    NotAuthenticatedAPIError,
+    JWTAPIError,
 )
 from rest_framework.fields import CharField
 from drf_spectacular.utils import (
@@ -351,6 +353,35 @@ LogoutSchema = extend_schema(
                         "detail": JWTErrorMessages.BLACKLISTED.value.format(
                             token_type="access",
                         ),
+                    },
+                ),
+                OpenApiExample(
+                    name="access_token_not_provided",
+                    summary="Access token not provided",
+                    description="The access token was not provided.",
+                    value={
+                        "code": NotAuthenticatedAPIError.default_code,
+                        "detail": NotAuthenticatedAPIError.default_detail,
+                    },
+                ),
+            ],
+        ),
+        403: OpenApiResponse(
+            description="**(FORBIDDEN)** The user does not have permission to access this resource.",
+            response={
+                "properties": {
+                    "code": {"type": "string"},
+                    "detail": {"type": "string"},
+                }
+            },
+            examples=[
+                OpenApiExample(
+                    name="is_jwt_owner",
+                    summary="User is not the owner of the JWT",
+                    description="The user making the request is not the owner of the JWT.",
+                    value={
+                        "code": IsJWTOwner.code,
+                        "detail": IsJWTOwner.message,
                     },
                 ),
             ],

@@ -205,7 +205,7 @@ paths:
               $ref: '#/components/schemas/LogoutRequest'
         required: true
       security:
-      - JWTAuthentication2: []
+      - JWTAuthentication: []
       responses:
         '200':
           description: '**(OK)** Successfully closed session.'
@@ -233,8 +233,33 @@ paths:
                   description: The access token exists in the blacklist. Tokens that
                     exist in the blacklist cannot be used in authentication processes
                     and creation of new tokens.
+                AccessTokenNotProvided:
+                  value:
+                    code: authentication_failed
+                    detail: Authentication credentials were not provided.
+                  summary: Access token not provided
+                  description: The access token was not provided.
           description: '**(UNAUTHORIZED)** The user''s JSON Web Token is not valid
             for logout.'
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  code:
+                    type: string
+                  detail:
+                    type: string
+              examples:
+                IsJwtOwner:
+                  value:
+                    code: permission_denied
+                    detail: The user making the request is not the owner of the JWT.
+                  summary: User is not the owner of the JWT
+                  description: The user making the request is not the owner of the
+                    JWT.
+          description: '**(FORBIDDEN)** The user does not have permission to access
+            this resource.'
         '404':
           content:
             application/json:
@@ -441,13 +466,18 @@ paths:
         consist of saving the user's information in the database and sending a
         message to the user's email with a link that will allow them to activate
         their account.
+      parameters:
+      - in: query
+        name: Unique user identifier
+        schema:
+          type: string
       tags:
       - Users
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SearcherRegisterRequest'
+              $ref: '#/components/schemas/SearcherRegisterUserRequest'
             examples:
               DataValid:
                 value:
@@ -470,10 +500,10 @@ paths:
                   \ intended for use on the frontend by the client."
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/SearcherRegisterRequest'
+              $ref: '#/components/schemas/SearcherRegisterUserRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/SearcherRegisterRequest'
+              $ref: '#/components/schemas/SearcherRegisterUserRequest'
         required: true
       responses:
         '201':
@@ -547,6 +577,143 @@ paths:
                   summary: Database connection error
                   description: The connection to the database could not be established.
           description: '**(INTERNAL_SERVER_ERROR)** An unexpected error occurred.'
+  /api/v1/user/searcher/{user_uuid}/:
+    get:
+      operationId: get_searcher_user
+      description: |-
+        Handle GET requests to obtain user information.
+
+        This method allows the user account information to be returned based on the
+        'user_uuid' indicated in the request path, without revealing sensitive
+        information.
+      parameters:
+      - in: path
+        name: user_uuid
+        schema:
+          type: string
+        required: true
+      tags:
+      - Users
+      security:
+      - JWTAuthentication: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                properties:
+                  base_data:
+                    type: object
+                  role_data:
+                    type: object
+              examples:
+                ResponseOk:
+                  value:
+                    base_data:
+                      email: user@email.com
+                    role_data:
+                      name: Nombre del usuario
+                      last_name: Apellido del usuario
+                      cc: '1234567890'
+                      phone_number: '+573111111111'
+                      address: Calle 123
+                      is_phone_verified: false
+                  summary: User data
+                  description: User information is displayed without showing sensitive
+                    data, it is possible that some of this data has a 'null' value.
+          description: '**(OK)** The requested user information is returned.'
+        '401':
+          content:
+            application/json:
+              schema:
+                properties:
+                  code:
+                    type: string
+                  detail:
+                    type: string
+              examples:
+                InvalidExpired:
+                  value:
+                    code: jwt_error
+                    detail: access token is invalid or expired.
+                  summary: JWT invalid or expired
+                  description: The access token is invalid or has expired.
+                TokenBlacklisted:
+                  value:
+                    code: jwt_error
+                    detail: access token is blacklisted.
+                  summary: Token exists in the blacklist
+                  description: The access token exists in the blacklist.
+                AccessTokenNotProvided:
+                  value:
+                    code: authentication_failed
+                    detail: Authentication credentials were not provided.
+                  summary: Access token not provided
+                  description: The access token was not provided.
+          description: '**(UNAUTHORIZED)** The user''s JSON Web Token is not valid
+            for logout.'
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  code:
+                    type: string
+                  detail:
+                    type: string
+              examples:
+                IsAuthenticated:
+                  value:
+                    code: permission_denied
+                    detail: The user does not have permissions to perform this action.
+                  summary: User is not authenticated
+                  description: The user is not authenticated.
+                IsJwtOwner:
+                  value:
+                    code: permission_denied
+                    detail: The user making the request is not the owner of the JWT.
+                  summary: User is not the owner of the JWT
+                  description: The user making the request is not the owner of the
+                    JWT.
+          description: '**(FORBIDDEN)** The user does not have permission to access
+            this resource.'
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  code:
+                    type: string
+                  detail:
+                    type: string
+              examples:
+                UserNotFound:
+                  value:
+                    code: user_not_found
+                    detail: The token user does not exist.
+                  summary: User not found
+                  description: The user in the provided JSON Web Tokens does not exist
+                    in the database.
+          description: '**(NOT_FOUND)** Some resources necessary for this process
+            were not found in the database.'
+        '500':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                  code:
+                    type: string
+              examples:
+                DatabaseConnectionError:
+                  value:
+                    code: database_connection_error
+                    detail: Unable to establish a connection with the database. Please
+                      try again later.
+                  summary: Database connection error
+                  description: The connection to the database could not be established.
+          description: '**(INTERNAL_SERVER_ERROR)** An unexpected error occurred.'
 components:
   schemas:
     AuthenticationRequest:
@@ -575,7 +742,7 @@ components:
           minLength: 1
       required:
       - refresh_token
-    SearcherRegisterRequest:
+    SearcherRegisterUserRequest:
       type: object
       description: Defines the fields that are required for the searcher user registration.
       properties:
@@ -589,10 +756,6 @@ components:
           writeOnly: true
           minLength: 8
           maxLength: 40
-        confirm_password:
-          type: string
-          writeOnly: true
-          minLength: 1
         name:
           type: string
           minLength: 1
@@ -603,6 +766,10 @@ components:
           minLength: 1
           pattern: ^[A-Za-z\u00f1\u00d1\s]+$
           maxLength: 40
+        confirm_password:
+          type: string
+          writeOnly: true
+          minLength: 1
       required:
       - confirm_password
       - email

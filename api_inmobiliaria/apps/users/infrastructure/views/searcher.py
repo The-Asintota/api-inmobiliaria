@@ -4,7 +4,8 @@ from apps.users.infrastructure.serializers import (
     SearcherUserReadOnlySerializer,
 )
 from apps.users.infrastructure.schemas.searcher import (
-    SearcherRegisterSchema,
+    POSTSearcherSchema,
+    GETSearcherSchema,
 )
 from apps.users.applications import RegisterUser, UserDataManager
 from apps.utils.views import MethodHTTPMapped, PermissionMixin
@@ -31,7 +32,7 @@ class RegisterSearcherAPIView(GenericAPIView):
     application_class = RegisterUser
     serializer_class = SearcherRegisterUserSerializer
 
-    @SearcherRegisterSchema
+    @POSTSearcherSchema
     def post(self, request: Request, *args, **kwargs) -> Response:
         """
         Handle POST requests for searcher user registration.
@@ -76,6 +77,7 @@ class SearcherAPIView(MethodHTTPMapped, PermissionMixin, GenericAPIView):
         "GET": SearcherUserReadOnlySerializer,
     }
 
+    @GETSearcherSchema
     def get(self, request: Request, *args, **kwargs) -> Response:
         """
         Handle GET requests to obtain user information.
@@ -88,7 +90,7 @@ class SearcherAPIView(MethodHTTPMapped, PermissionMixin, GenericAPIView):
         app: UserDataManager = self.get_application_class(
             user_repository=UserRepository
         )
-        role_user = app.get(user_model=request.user)
+        role_user = app.get(user=request.user)
 
         serializer_class = self.get_serializer_class()
         serializer: Serializer = serializer_class(
