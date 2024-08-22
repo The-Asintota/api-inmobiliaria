@@ -1,6 +1,5 @@
 from django.urls import path
 from .views import (
-    RegisterSearcherAPIView,
     SearcherAPIView,
     AuthenticationAPIView,
     UpdateTokenAPIView,
@@ -11,11 +10,6 @@ from .views import (
 urlpatterns = [
     path(
         route="searcher/",
-        view=RegisterSearcherAPIView.as_view(),
-        name="register_searcher_user",
-    ),
-    path(
-        route="searcher/<str:user_uuid>/",
         view=SearcherAPIView.as_view(),
         name="searcher_user",
     ),

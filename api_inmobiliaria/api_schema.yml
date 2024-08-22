@@ -456,142 +456,14 @@ paths:
                   description: The connection to the database could not be established.
           description: '**(INTERNAL_SERVER_ERROR)** An unexpected error occurred.'
   /api/v1/user/searcher/:
-    post:
-      operationId: create_searcher_user
-      description: |-
-        Handle POST requests for searcher user registration.
-
-        This method allows the registration of a new seacher user, waiting for a
-        POST request with the registration data. A successful registration will
-        consist of saving the user's information in the database and sending a
-        message to the user's email with a link that will allow them to activate
-        their account.
-      parameters:
-      - in: query
-        name: Unique user identifier
-        schema:
-          type: string
-      tags:
-      - Users
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SearcherRegisterUserRequest'
-            examples:
-              DataValid:
-                value:
-                  name: Nombres del usuario
-                  last_name: Apellidos del usuario
-                  email: user1@email.com
-                  password: contraseña1234
-                  confirm_password: contraseña1234
-                summary: Register a new user with role searcher.
-                description: "A valid user registration data. The following validations\
-                  \ will be applied:\n- **Name and last_name:** This field is required,\
-                  \ must not exceed 40 characters and must contain only letters and\
-                  \ spaces.\n- **Email:** This field is required and must not exceed\
-                  \ 40 characters, must follow standard email format, and must not\
-                  \ be in use.\n- **Password:** This field is required and should\
-                  \ be between 8 and 40 characters. It should not be a common password\
-                  \ or contain only numbers. \n- **Confirm password:** This field\
-                  \ is required and should match the password field.\n\nRequest responses\
-                  \ that include messages in Spanish indicate that these are messages\
-                  \ intended for use on the frontend by the client."
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/SearcherRegisterUserRequest'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/SearcherRegisterUserRequest'
-        required: true
-      responses:
-        '201':
-          description: '**(CREATED)** User created correctly.'
-        '400':
-          content:
-            application/json:
-              schema:
-                properties:
-                  code:
-                    type: string
-                  detail:
-                    type: object
-              examples:
-                InvalidData:
-                  value:
-                    code: invalid_request_data
-                    detail:
-                      name:
-                      - Este campo es requerido.
-                      - Este campo no puede estar en blanco.
-                      - Este campo no puede ser nulo.
-                      - El valor ingresado es inválido.
-                      - El valor ingresado no puede tener más de 40 caracteres.
-                      last_name:
-                      - Este campo es requerido.
-                      - Este campo no puede estar en blanco.
-                      - Este campo no puede ser nulo.
-                      - El valor ingresado es inválido.
-                      - El valor ingresado no puede tener más de 40 caracteres.
-                      email:
-                      - Este campo es requerido.
-                      - Este campo no puede estar en blanco.
-                      - Este campo no puede ser nulo.
-                      - El valor ingresado es inválido.
-                      - El valor ingresado no puede tener más de 40 caracteres.
-                      - Este correo electrónico ya está en uso.
-                      password:
-                      - Este campo es requerido.
-                      - Este campo no puede estar en blanco.
-                      - Este campo no puede ser nulo.
-                      - El valor ingresado es inválido.
-                      - El valor ingresado no puede tener más de 40 caracteres.
-                      - El valor ingresado debe tener al menos 8 caracteres.
-                      confirm_password:
-                      - Este campo es requerido.
-                      - Este campo no puede estar en blanco.
-                      - Este campo no puede ser nulo.
-                      - La contraseña debe contener al menos una mayuscula o una minuscula.
-                      - Esta contraseña es demasiado común.
-                      - Las contraseñas no coinciden.
-                  summary: Invalid data
-                  description: These are the possible error messages for each field.
-          description: '**(BAD_REQUEST)** The request data is invalid, error messages
-            are returned for each field that did not pass validations.'
-        '500':
-          content:
-            application/json:
-              schema:
-                properties:
-                  detail:
-                    type: string
-                  code:
-                    type: string
-              examples:
-                DatabaseConnectionError:
-                  value:
-                    code: database_connection_error
-                    detail: Unable to establish a connection with the database. Please
-                      try again later.
-                  summary: Database connection error
-                  description: The connection to the database could not be established.
-          description: '**(INTERNAL_SERVER_ERROR)** An unexpected error occurred.'
-  /api/v1/user/searcher/{user_uuid}/:
     get:
       operationId: get_searcher_user
       description: |-
         Handle GET requests to obtain user information.
 
-        This method allows the user account information to be returned based on the
-        'user_uuid' indicated in the request path, without revealing sensitive
-        information.
-      parameters:
-      - in: path
-        name: user_uuid
-        schema:
-          type: string
-        required: true
+        This method returns the user account information associated with the request's
+        access token, without revealing sensitive data, provided the user has
+        permission to read their own information.
       tags:
       - Users
       security:
@@ -696,6 +568,122 @@ paths:
                     in the database.
           description: '**(NOT_FOUND)** Some resources necessary for this process
             were not found in the database.'
+        '500':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                  code:
+                    type: string
+              examples:
+                DatabaseConnectionError:
+                  value:
+                    code: database_connection_error
+                    detail: Unable to establish a connection with the database. Please
+                      try again later.
+                  summary: Database connection error
+                  description: The connection to the database could not be established.
+          description: '**(INTERNAL_SERVER_ERROR)** An unexpected error occurred.'
+    post:
+      operationId: create_searcher_user
+      description: |-
+        Handle POST requests for searcher user registration.
+
+        This method allows the registration of a new seacher user, waiting for a
+        POST request with the registration data. A successful registration will
+        consist of saving the user's information in the database and sending a
+        message to the user's email with a link that will allow them to activate
+        their account.
+      tags:
+      - Users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearcherRegisterUserRequest'
+            examples:
+              DataValid:
+                value:
+                  name: Nombres del usuario
+                  last_name: Apellidos del usuario
+                  email: user1@email.com
+                  password: contraseña1234
+                  confirm_password: contraseña1234
+                summary: Register a new user with role searcher.
+                description: "A valid user registration data. The following validations\
+                  \ will be applied:\n- **Name and last_name:** This field is required,\
+                  \ must not exceed 40 characters and must contain only letters and\
+                  \ spaces.\n- **Email:** This field is required and must not exceed\
+                  \ 40 characters, must follow standard email format, and must not\
+                  \ be in use.\n- **Password:** This field is required and should\
+                  \ be between 8 and 40 characters. It should not be a common password\
+                  \ or contain only numbers. \n- **Confirm password:** This field\
+                  \ is required and should match the password field.\n\nRequest responses\
+                  \ that include messages in Spanish indicate that these are messages\
+                  \ intended for use on the frontend by the client."
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SearcherRegisterUserRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SearcherRegisterUserRequest'
+        required: true
+      responses:
+        '201':
+          description: '**(CREATED)** User created correctly.'
+        '400':
+          content:
+            application/json:
+              schema:
+                properties:
+                  code:
+                    type: string
+                  detail:
+                    type: object
+              examples:
+                InvalidData:
+                  value:
+                    code: invalid_request_data
+                    detail:
+                      name:
+                      - Este campo es requerido.
+                      - Este campo no puede estar en blanco.
+                      - Este campo no puede ser nulo.
+                      - El valor ingresado es inválido.
+                      - El valor ingresado no puede tener más de 40 caracteres.
+                      last_name:
+                      - Este campo es requerido.
+                      - Este campo no puede estar en blanco.
+                      - Este campo no puede ser nulo.
+                      - El valor ingresado es inválido.
+                      - El valor ingresado no puede tener más de 40 caracteres.
+                      email:
+                      - Este campo es requerido.
+                      - Este campo no puede estar en blanco.
+                      - Este campo no puede ser nulo.
+                      - El valor ingresado es inválido.
+                      - El valor ingresado no puede tener más de 40 caracteres.
+                      - Este correo electrónico ya está en uso.
+                      password:
+                      - Este campo es requerido.
+                      - Este campo no puede estar en blanco.
+                      - Este campo no puede ser nulo.
+                      - El valor ingresado es inválido.
+                      - El valor ingresado no puede tener más de 40 caracteres.
+                      - El valor ingresado debe tener al menos 8 caracteres.
+                      confirm_password:
+                      - Este campo es requerido.
+                      - Este campo no puede estar en blanco.
+                      - Este campo no puede ser nulo.
+                      - La contraseña debe contener al menos una mayuscula o una minuscula.
+                      - Esta contraseña es demasiado común.
+                      - Las contraseñas no coinciden.
+                  summary: Invalid data
+                  description: These are the possible error messages for each field.
+          description: '**(BAD_REQUEST)** The request data is invalid, error messages
+            are returned for each field that did not pass validations.'
         '500':
           content:
             application/json:

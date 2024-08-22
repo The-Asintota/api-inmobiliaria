@@ -80,7 +80,7 @@ class UserRepository:
     @classmethod
     def get_role_data(
         cls,
-        model_user: Optional[User] = None,
+        user_base: Optional[User] = None,
         role: Optional[str] = None,
         **filters,
     ) -> QuerySet[Model]:
@@ -89,7 +89,7 @@ class UserRepository:
         the provided filters.
 
         #### Parameters:
-        - model_user: User instance from which to retrieve the related data.
+        - user_base: An instance of the User model.
         - role: Role of the user from which to retrieve the related data.
         - filters: Keyword arguments that define the filters to apply.
 
@@ -99,8 +99,8 @@ class UserRepository:
         - ValueError: If the 'user' or 'role' parameter is not provided.
         """
 
-        if model_user:
-            related_model = model_user.content_type.model_class()
+        if user_base:
+            related_model = user_base.content_type.model_class()
         elif role:
             content_type = ContentType.objects.get(model=role)
             related_model = content_type.model_class()

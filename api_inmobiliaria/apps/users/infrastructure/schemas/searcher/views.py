@@ -1,5 +1,4 @@
 from apps.users.domain.constants import SearcherProperties, UserProperties
-from apps.permissions import IsJWTOwner
 from apps.api_exceptions import (
     DatabaseConnectionAPIError,
     NotAuthenticatedAPIError,
@@ -164,7 +163,7 @@ GETSearcherSchema = extend_schema(
             examples=[
                 OpenApiExample(
                     name="invalid_expired",
-                    summary="JWT invalid or expired",
+                    summary="Access token invalid or expired",
                     description="The access token is invalid or has expired.",
                     value={
                         "code": JWTAPIError.default_code,
@@ -175,7 +174,7 @@ GETSearcherSchema = extend_schema(
                 ),
                 OpenApiExample(
                     name="token_blacklisted",
-                    summary="Token exists in the blacklist",
+                    summary="Access token exists in the blacklist",
                     description="The access token exists in the blacklist.",
                     value={
                         "code": JWTAPIError.default_code,
@@ -211,15 +210,6 @@ GETSearcherSchema = extend_schema(
                     value={
                         "code": PermissionDeniedAPIError.default_code,
                         "detail": PermissionDeniedAPIError.default_detail,
-                    },
-                ),
-                OpenApiExample(
-                    name="is_jwt_owner",
-                    summary="User is not the owner of the JWT",
-                    description="The user making the request is not the owner of the JWT.",
-                    value={
-                        "code": IsJWTOwner.code,
-                        "detail": IsJWTOwner.message,
                     },
                 ),
             ],

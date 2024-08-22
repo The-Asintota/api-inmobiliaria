@@ -21,7 +21,7 @@ class TestSearcherUserAPIView:
     user with the "Searcher" role.
     """
 
-    path = reverse(viewname="register_searcher_user")
+    path = reverse(viewname="searcher_user")
     user_factory = UserFactory
     client = Client()
 

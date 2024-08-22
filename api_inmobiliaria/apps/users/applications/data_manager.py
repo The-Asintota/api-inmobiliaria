@@ -13,24 +13,24 @@ class UserDataManager:
     def __init__(self, user_repository: IUserRepository) -> None:
         self._user_repository = user_repository
 
-    def get(self, user: User) -> Model:
+    def get(self, user_base: User) -> Model:
         """
         Get the role data of a user.
 
         #### Parameters:
-        - user: An instance of the User model.
+        - user_base: An instance of the User model.
 
         #### Raises:
         - PermissionDeniedAPIError: If the user does not have the required permissions.
         """
 
-        role_user = user.content_type.model
+        role_user = user_base.content_type.model
 
-        if not user.has_perm(
+        if not user_base.has_perm(
             perm=USER_ROLE_PERMISSIONS[role_user]["view_data"]
         ):
             raise PermissionDeniedAPIError()
 
         return self._user_repository.get_role_data(
-            model_user=user, uuid=user.role_data_uuid
+            user_base=user_base, uuid=user_base.role_data_uuid
         ).first()

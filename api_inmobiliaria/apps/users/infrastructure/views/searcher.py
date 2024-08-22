@@ -9,7 +9,6 @@ from apps.users.infrastructure.schemas.searcher import (
 )
 from apps.users.applications import RegisterUser, UserDataManager
 from apps.utils.views import MethodHTTPMapped, PermissionMixin
-from apps.permissions import IsJWTOwner
 from authentication.jwt import JWTAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.serializers import Serializer
@@ -19,7 +18,7 @@ from rest_framework.generics import GenericAPIView
 from rest_framework import status
 
 
-class RegisterSearcherAPIView(GenericAPIView):
+class SearcherAPIView(MethodHTTPMapped, PermissionMixin, GenericAPIView):
     """
     API view for managing operations for users with `searcher role`.
 
@@ -27,10 +26,39 @@ class RegisterSearcherAPIView(GenericAPIView):
     permissions, and serializers based on the HTTP method of the incoming request.
     """
 
-    authentication_classes = []
-    permission_classes = []
-    application_class = RegisterUser
-    serializer_class = SearcherRegisterUserSerializer
+    authentication_mapping = {"POST": [], "GET": [JWTAuthentication]}
+    permission_mapping = {"POST": [], "GET": [IsAuthenticated]}
+    application_mapping = {"POST": RegisterUser, "GET": UserDataManager}
+    serializer_mapping = {
+        "POST": SearcherRegisterUserSerializer,
+        "GET": SearcherUserReadOnlySerializer,
+    }
+
+    @GETSearcherSchema
+    def get(self, request: Request, *args, **kwargs) -> Response:
+        """
+        Handle GET requests to obtain user information.
+
+        This method returns the user account information associated with the request's
+        access token, without revealing sensitive data, provided the user has
+        permission to read their own information.
+        """
+
+        searcher: UserDataManager = self.get_application_class(
+            user_repository=UserRepository
+        )
+        role_user = searcher.get(user_base=request.user)
+
+        serializer_class = self.get_serializer_class()
+        serializer: Serializer = serializer_class(
+            instance=request.user, role_instance=role_user
+        )
+
+        return Response(
+            data=serializer.data,
+            status=status.HTTP_200_OK,
+            content_type="application/json",
+        )
 
     @POSTSearcherSchema
     def post(self, request: Request, *args, **kwargs) -> Response:
@@ -44,7 +72,8 @@ class RegisterSearcherAPIView(GenericAPIView):
         their account.
         """
 
-        serializer = self.serializer_class(data=request.data)
+        serializer_class = self.get_serializer_class()
+        serializer: Serializer = serializer_class(data=request.data)
 
         if not serializer.is_valid():
             return Response(
@@ -56,49 +85,9 @@ class RegisterSearcherAPIView(GenericAPIView):
                 content_type="application/json",
             )
 
-        register = self.application_class(user_repository=UserRepository)
+        register: RegisterUser = self.get_application_class(
+            user_repository=UserRepository
+        )
         register.searcher(data=serializer.validated_data, request=request)
 
         return Response(status=status.HTTP_201_CREATED)
-
-
-class SearcherAPIView(MethodHTTPMapped, PermissionMixin, GenericAPIView):
-    """
-    API view for managing operations for users with `searcher role`.
-
-    It uses a mapping approach to determine the appropriate application logic,
-    permissions, and serializers based on the HTTP method of the incoming request.
-    """
-
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated, IsJWTOwner]
-    application_mapping = {"GET": UserDataManager}
-    serializer_mapping = {
-        "GET": SearcherUserReadOnlySerializer,
-    }
-
-    @GETSearcherSchema
-    def get(self, request: Request, *args, **kwargs) -> Response:
-        """
-        Handle GET requests to obtain user information.
-
-        This method allows the user account information to be returned based on the
-        'user_uuid' indicated in the request path, without revealing sensitive
-        information.
-        """
-
-        app: UserDataManager = self.get_application_class(
-            user_repository=UserRepository
-        )
-        role_user = app.get(user=request.user)
-
-        serializer_class = self.get_serializer_class()
-        serializer: Serializer = serializer_class(
-            instance=request.user, role_instance=role_user
-        )
-
-        return Response(
-            data=serializer.data,
-            status=status.HTTP_200_OK,
-            content_type="application/json",
-        )

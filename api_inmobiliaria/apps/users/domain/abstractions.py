@@ -45,7 +45,7 @@ class IUserRepository(Protocol):
     @classmethod
     def get_role_data(
         cls,
-        model_user: Optional[User] = None,
+        user_base: Optional[User] = None,
         role: Optional[str] = None,
         **filters,
     ) -> QuerySet[Model]:
@@ -54,7 +54,7 @@ class IUserRepository(Protocol):
         the provided filters.
 
         #### Parameters:
-        - model_user: User instance from which to retrieve the related data.
+        - user_base: An instance of the User model.
         - role: Role of the user from which to retrieve the related data.
         - filters: Keyword arguments that define the filters to apply.
 
