@@ -38,8 +38,8 @@ class TestApplicationSendMail:
         """
 
         # Creating the user data to be used in the test
-        user, _ = self.user_factory.create_searcher_user(
-            is_active=False, save=True, add_perm=False
+        user, _, _ = self.user_factory.searcher_user(
+            active=False, save=True, add_perm=False
         )
 
         # Instantiating the application and calling the method
@@ -136,8 +136,8 @@ class TestApplicationCheckToken:
         """
 
         # Creating the user and token to be used in the test
-        user, _ = self.user_factory.create_searcher_user(
-            is_active=False, save=True, add_perm=False
+        user, _, _ = self.user_factory.searcher_user(
+            active=False, save=True, add_perm=False
         )
         token = TokenGenerator().make_token(user=user)
         Token.objects.create(token=token)
@@ -191,8 +191,8 @@ class TestApplicationCheckToken:
         """
 
         # Creating the user and token to be used in the test
-        user, _ = self.user_factory.create_searcher_user(
-            is_active=False, save=True, add_perm=False
+        user, _, _ = self.user_factory.searcher_user(
+            active=False, save=True, add_perm=False
         )
         token = TokenGenerator().make_token(user=user)
         token_obj = Token.objects.create(token=token)
@@ -226,13 +226,13 @@ class TestApplicationCheckToken:
         """
 
         # Creating the user and token to be used in the test
-        user_1, _ = self.user_factory.create_searcher_user(
-            is_active=False, save=True, add_perm=False
+        user, _, _ = self.user_factory.searcher_user(
+            active=False, save=True, add_perm=False
         )
-        user_2, _ = self.user_factory.create_searcher_user(
-            is_active=False, save=True, add_perm=False
+        other_user, _, _ = self.user_factory.searcher_user(
+            active=False, save=True, add_perm=False
         )
-        token = TokenGenerator().make_token(user=user_2)
+        token = TokenGenerator().make_token(user=other_user)
         Token.objects.create(token=token)
 
         # Instantiating the application and calling the method
@@ -244,12 +244,12 @@ class TestApplicationCheckToken:
                 path_send_mail="send_activation_mail",
             ).check_token(
                 token=token,
-                user_uuid=user_1.uuid,
+                user_uuid=user.uuid,
                 request=RequestFactory().post("/"),
             )
 
         # Asserting that the user is not active
-        user = User.objects.get(uuid=user_1.uuid)
+        user = User.objects.get(uuid=user.uuid)
 
         assert not user.is_active
 
@@ -262,8 +262,8 @@ class TestApplicationCheckToken:
         """
 
         # Creating the user to be used in the test
-        user, _ = self.user_factory.create_searcher_user(
-            is_active=False, save=True, add_perm=False
+        user, _, _ = self.user_factory.searcher_user(
+            active=False, save=True, add_perm=False
         )
 
         # Mocking the methods

@@ -56,7 +56,7 @@ class TestUpdateTokensAPIView:
         """
 
         # Creating the JWTs to be used in the test
-        user, _ = self.user_factory.create_user(
+        user, _, _ = self.user_factory.user(
             role_user=role_user, active=True, save=True, add_perm=False
         )
         jwt_data = self.jwt_factory.access_and_refresh(
@@ -235,7 +235,7 @@ class TestUpdateTokensAPIView:
         """
 
         # Creating the JWTs to be used in the test
-        user, _ = self.user_factory.create_searcher_user(
+        user, _, _ = self.user_factory.searcher_user(
             active=True, save=True, add_perm=False
         )
         access_token = self.jwt_factory.access(
@@ -305,7 +305,7 @@ class TestUpdateTokensAPIView:
         """
 
         # Creating the JWTs to be used in the test
-        user, _ = self.user_factory.create_searcher_user(
+        user, _, _ = self.user_factory.searcher_user(
             active=True, save=True, add_perm=False
         )
         jwt_data = self.jwt_factory.access_and_refresh(

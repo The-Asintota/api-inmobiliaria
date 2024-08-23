@@ -41,14 +41,14 @@ class TestAccountActivationView:
             },
         )
 
-    def test_request_valid_data(self) -> None:
+    def test_if_valid_data(self) -> None:
         """
         This test is responsible for validating the expected behavior of the view
         when the request data is valid.
         """
 
         # Creating the user and token to be used in the test
-        user, _ = self.user_factory.create_searcher_user(
+        user, _, _ = self.user_factory.searcher_user(
             active=False, add_perm=False, save=True
         )
         token = self.token_factory(user=user)
@@ -74,7 +74,7 @@ class TestAccountActivationView:
         assert context["redirect"]["action"] == "Iniciar sesión"
         assert context["redirect"]["url"] == LOGIN_URL
 
-    def test_request_invalid_data(self) -> None:
+    def test_if_invalid_data(self) -> None:
         """
         This test is responsible for validating the expected behavior of the view
         when the request data is invalid.
@@ -150,7 +150,7 @@ class TestAccountActivationView:
         """
 
         # Creating the user to be used in the test
-        user, _ = self.user_factory.create_searcher_user(
+        user, _, _ = self.user_factory.searcher_user(
             active=False, add_perm=False, save=True
         )
 
@@ -189,7 +189,7 @@ class TestAccountActivationView:
         """
 
         # Creating the user and token to be used in the test
-        user, _ = self.user_factory.create_searcher_user(
+        user, _, _ = self.user_factory.searcher_user(
             active=False, add_perm=False, save=True
         )
         token = self.token_factory(user=user)
@@ -227,7 +227,7 @@ class TestAccountActivationView:
         """
 
         # Creating the user and token to be used in the test
-        user, _ = self.user_factory.create_searcher_user(
+        user, _, _ = self.user_factory.searcher_user(
             active=False, add_perm=False, save=True
         )
         token = self.token_factory(user=user)
@@ -277,7 +277,7 @@ class TestAccountActivationView:
         """
 
         # Creating the user and token to be used in the test
-        user, _ = self.user_factory.create_searcher_user(
+        user, _, _ = self.user_factory.searcher_user(
             active=False, add_perm=False, save=True
         )
         token = self.token_factory(user=user)

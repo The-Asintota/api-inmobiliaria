@@ -15,7 +15,7 @@ import pytest
 
 
 @pytest.mark.django_db
-class TestSearcherUserAPIView:
+class TestSearcherRegisterUserAPIView:
     """
     This class encapsulates the tests for the view responsible for creating a
     user with the "Searcher" role.
@@ -195,12 +195,12 @@ class TestSearcherUserAPIView:
         """
 
         # Creating the user
-        _ = self.user_factory.create_searcher_user(
+        _ = self.user_factory.searcher_user(
             email=data["email"],
             password=data["password"],
             name=data["name"],
             last_name=data["last_name"],
-            is_active=False,
+            active=False,
             save=True,
             add_perm=False,
         )
@@ -234,7 +234,9 @@ class TestSearcherUserAPIView:
         get_user_data.side_effect = DatabaseConnectionAPIError
 
         # Creating the user data to be used in the test
-        _, data = self.user_factory.create_searcher_user(save=False)
+        _, _, data = self.user_factory.searcher_user(
+            active=False, save=False, add_perm=False
+        )
         data["confirm_password"] = data["password"]
 
         # Simulating the request

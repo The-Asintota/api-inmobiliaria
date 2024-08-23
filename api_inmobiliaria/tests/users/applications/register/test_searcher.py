@@ -29,7 +29,9 @@ class TestRegisterSearcherApplication:
         """
 
         # Creating the user data to be used in the test
-        _, data = self.user_factory.create_searcher_user(save=False)
+        _, _, data = self.user_factory.searcher_user(
+            active=False, save=False, add_perm=False
+        )
 
         # Asserting that the user does not exist in the database
         assert not User.objects.filter(email=data["email"]).exists()
@@ -80,7 +82,9 @@ class TestRegisterSearcherApplication:
         """
 
         # Creating the user data to be used in the test
-        _, data = self.user_factory.create_searcher_user(save=False)
+        _, _, data = self.user_factory.searcher_user(
+            active=False, save=False, add_perm=False
+        )
 
         # Mocking the methods
         create: Mock = user_repository.create

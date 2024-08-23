@@ -45,7 +45,7 @@ class TestLoginApplication:
         """
 
         # Creating the user data to be used in the test
-        _, data = self.user_factory.create_user(
+        _, _, data = self.user_factory.user(
             role_user=role_user, active=True, save=True, add_perm=True
         )
 
@@ -134,7 +134,7 @@ class TestLoginApplication:
         """
 
         # Creating the user data to be used in the test
-        _, data = self.user_factory.create_user(
+        _, _, data = self.user_factory.user(
             role_user=role_user, active=False, save=True, add_perm=True
         )
 
@@ -163,7 +163,7 @@ class TestLoginApplication:
         """
 
         # Creating the user data to be used in the test
-        _, data = self.user_factory.create_user(
+        _, _, data = self.user_factory.user(
             role_user=role_user, active=True, save=True, add_perm=False
         )
 

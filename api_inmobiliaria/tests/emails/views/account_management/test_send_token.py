@@ -40,7 +40,7 @@ class TestSendAccountActivationTokenAPIView:
         """
 
         # Creating the user to be used in the test
-        user, _ = self.user_factory.create_searcher_user(
+        user, _, _ = self.user_factory.searcher_user(
             active=False, add_perm=False, save=True
         )
 
@@ -96,7 +96,7 @@ class TestSendAccountActivationTokenAPIView:
         """
 
         # Creating the user to be used in the test
-        user, _ = self.user_factory.create_searcher_user(
+        user, _, _ = self.user_factory.searcher_user(
             active=True, add_perm=False, save=True
         )
 
@@ -128,7 +128,7 @@ class TestSendAccountActivationTokenAPIView:
         """
 
         # Creating the user to be used in the test
-        user, _ = self.user_factory.create_searcher_user(
+        user, _, _ = self.user_factory.searcher_user(
             active=False, add_perm=False, save=True
         )
 
