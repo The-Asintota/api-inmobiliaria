@@ -251,13 +251,12 @@ paths:
                   detail:
                     type: string
               examples:
-                IsJwtOwner:
+                IsAuthenticated:
                   value:
                     code: permission_denied
-                    detail: The user making the request is not the owner of the JWT.
-                  summary: User is not the owner of the JWT
-                  description: The user making the request is not the owner of the
-                    JWT.
+                    detail: The user does not have permissions to perform this action.
+                  summary: User is not authenticated
+                  description: The user is not authenticated.
           description: '**(FORBIDDEN)** The user does not have permission to access
             this resource.'
         '404':
@@ -508,13 +507,13 @@ paths:
                   value:
                     code: jwt_error
                     detail: access token is invalid or expired.
-                  summary: JWT invalid or expired
+                  summary: Access token invalid or expired
                   description: The access token is invalid or has expired.
                 TokenBlacklisted:
                   value:
                     code: jwt_error
                     detail: access token is blacklisted.
-                  summary: Token exists in the blacklist
+                  summary: Access token exists in the blacklist
                   description: The access token exists in the blacklist.
                 AccessTokenNotProvided:
                   value:
@@ -540,13 +539,6 @@ paths:
                     detail: The user does not have permissions to perform this action.
                   summary: User is not authenticated
                   description: The user is not authenticated.
-                IsJwtOwner:
-                  value:
-                    code: permission_denied
-                    detail: The user making the request is not the owner of the JWT.
-                  summary: User is not the owner of the JWT
-                  description: The user making the request is not the owner of the
-                    JWT.
           description: '**(FORBIDDEN)** The user does not have permission to access
             this resource.'
         '404':

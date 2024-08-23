@@ -10,7 +10,7 @@ from apps.users.infrastructure.schemas.searcher import (
 from apps.users.applications import RegisterUser, UserDataManager
 from apps.utils.views import MethodHTTPMapped, PermissionMixin
 from authentication.jwt import JWTAuthentication
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.serializers import Serializer
 from rest_framework.response import Response
 from rest_framework.request import Request
@@ -27,7 +27,7 @@ class SearcherAPIView(MethodHTTPMapped, PermissionMixin, GenericAPIView):
     """
 
     authentication_mapping = {"POST": [], "GET": [JWTAuthentication]}
-    permission_mapping = {"POST": [], "GET": [IsAuthenticated]}
+    permission_mapping = {"POST": [AllowAny], "GET": [IsAuthenticated]}
     application_mapping = {"POST": RegisterUser, "GET": UserDataManager}
     serializer_mapping = {
         "POST": SearcherRegisterUserSerializer,

@@ -5,7 +5,6 @@ from apps.users.domain.constants import (
     UserRoles,
 )
 from apps.utils.messages import ERROR_MESSAGES, JWTErrorMessages
-from apps.permissions import IsJWTOwner
 from apps.api_exceptions import (
     PermissionDeniedAPIError,
     DatabaseConnectionAPIError,
@@ -376,12 +375,12 @@ LogoutSchema = extend_schema(
             },
             examples=[
                 OpenApiExample(
-                    name="is_jwt_owner",
-                    summary="User is not the owner of the JWT",
-                    description="The user making the request is not the owner of the JWT.",
+                    name="is_authenticated",
+                    summary="User is not authenticated",
+                    description="The user is not authenticated.",
                     value={
-                        "code": IsJWTOwner.code,
-                        "detail": IsJWTOwner.message,
+                        "code": PermissionDeniedAPIError.default_code,
+                        "detail": PermissionDeniedAPIError.default_detail,
                     },
                 ),
             ],

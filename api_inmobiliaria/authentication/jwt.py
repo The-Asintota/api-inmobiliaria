@@ -1,4 +1,4 @@
-from apps.users.infrastructure.db import JWTRepository
+from apps.users.infrastructure.db import JWTRepository, UserRepository
 from apps.users.domain.typing import JWTPayload
 from apps.users.models import User
 from apps.utils.messages import JWTErrorMessages
@@ -236,8 +236,6 @@ class JWTAuthentication(BaseJWTuthentication):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        from apps.users.infrastructure.db import UserRepository
-
         self._user_repository = UserRepository
 
     def get_validated_token(self, raw_token: bytes) -> Token:

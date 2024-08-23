@@ -13,7 +13,7 @@ from apps.users.applications import JWTLogout, JWTLogin, JWTUpdate
 from apps.utils.views import PermissionMixin
 from authentication.jwt import JWTAuthentication
 from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.generics import GenericAPIView
 from rest_framework.response import Response
 from rest_framework.request import Request
@@ -29,7 +29,7 @@ class AuthenticationAPIView(TokenObtainPairView):
     """
 
     authentication_classes = []
-    permission_classes = []
+    permission_classes = [AllowAny]
     serializer_class = AuthenticationSerializer
     application_class = JWTLogin
 
@@ -74,7 +74,7 @@ class UpdateTokenAPIView(GenericAPIView):
     """
 
     authentication_classes = []
-    permission_classes = []
+    permission_classes = [AllowAny]
     serializer_class = UpdateTokenSerializer
     application_class = JWTUpdate
 

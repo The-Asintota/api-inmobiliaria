@@ -203,6 +203,11 @@ class SearcherUserReadOnlySerializer(serializers.Serializer):
 
     def to_representation(self, instance: User) -> Dict[str, Any]:
 
+        phone_number = self.role_instance.phone_number
+
+        if phone_number:
+            phone_number = str(phone_number)
+
         return {
             "base_data": {"email": instance.email},
             "role_data": {
@@ -210,7 +215,7 @@ class SearcherUserReadOnlySerializer(serializers.Serializer):
                 "last_name": self.role_instance.last_name,
                 "cc": self.role_instance.cc,
                 "address": self.role_instance.address,
-                "phone_number": self.role_instance.phone_number,
+                "phone_number": phone_number,
                 "is_phone_verified": self.role_instance.is_phone_verified,
             },
         }

@@ -129,7 +129,9 @@ REST_FRAMEWORK = {
         "authentication.jwt.JWTAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ],
-    "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.AllowAny"],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated"
+    ],
     "EXCEPTION_HANDLER": "apps.utils.exceptions.api_view_exception_handler",
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
@@ -197,7 +199,6 @@ SPECTACULAR_SETTINGS = {
     "SWAGGER_UI_SETTINGS": {
         "persistAuthorization": True,
     },
-    "SECURITY": [{"JWTAuthentication": []}],
     "SECURITY_DEFINITIONS": [
         {
             "JWTAuthentication": {
