@@ -1,6 +1,10 @@
 from apps.users.models import User
 from apps.utils.messages import JWTErrorMessages
-from apps.api_exceptions import ResourceNotFoundAPIError, JWTAPIError
+from apps.api_exceptions import (
+    ResourceNotFoundAPIError,
+    NotAuthenticatedAPIError,
+    JWTAPIError,
+)
 from tests.factory import JWTFactory, UserFactory
 from tests.utils import empty_queryset
 from rest_framework.fields import CharField
@@ -39,6 +43,39 @@ class TestLogoutAPIView:
     user_factory = UserFactory
     jwt_factory = JWTFactory
     client = Client()
+
+    def test_if_access_token_not_provided(self) -> None:
+        """
+        This test is responsible for validating the expected behavior of the view
+        when the access token is not provided.
+        """
+
+        # Creating the JWTs to be used in the test
+        user, _, _ = self.user_factory.searcher_user(
+            active=True, save=True, add_perm=False
+        )
+        refresh_token = self.jwt_factory.refresh(
+            role_user=user.content_type.model,
+            user=user,
+            exp=False,
+            save=True,
+        ).get("token")
+
+        # Simulating the request
+        response = self.client.post(
+            path=self.path,
+            data={"refresh_token": refresh_token},
+            content_type="application/json",
+        )
+
+        # Asserting that response data is correct
+        status_code_expected = NotAuthenticatedAPIError.status_code
+        code_expected = NotAuthenticatedAPIError.default_code
+        message_expected = NotAuthenticatedAPIError.default_detail
+
+        assert response.status_code == status_code_expected
+        assert response.data["code"] == code_expected
+        assert response.data["detail"] == message_expected
 
     def test_if_valid_data(self) -> None:
         """
