@@ -3,7 +3,7 @@ from apps.api_exceptions import DatabaseConnectionAPIError
 from django.contrib.contenttypes.models import ContentType
 from django.db import OperationalError
 from django.db.models import QuerySet, Model
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
 
 class UserRepository:
@@ -78,43 +78,56 @@ class UserRepository:
         return user_list
 
     @classmethod
-    def get_role_data(
-        cls,
-        user_base: Optional[User] = None,
-        role: Optional[str] = None,
-        **filters,
-    ) -> QuerySet[Model]:
+    def get_role_data(cls, user_base: User) -> QuerySet[Model]:
         """
-        Retrieves the related data of a user role from the database according to
-        the provided filters.
+        Retrieves the role data of a user.
 
         #### Parameters:
         - user_base: An instance of the User model.
-        - role: Role of the user from which to retrieve the related data.
-        - filters: Keyword arguments that define the filters to apply.
 
         #### Raises:
         - DatabaseConnectionAPIError: If there is an operational error with the
         database.
-        - ValueError: If the 'user' or 'role' parameter is not provided.
         """
 
-        if user_base:
-            related_model = user_base.content_type.model_class()
-        elif role:
-            content_type = ContentType.objects.get(model=role)
-            related_model = content_type.model_class()
-        else:
-            raise ValueError("The 'user' or 'role' parameter must be provided.")
+        related_model = user_base.content_type.model_class()
 
         try:
-            related_data = related_model.objects.filter(**filters)
+            related_data = related_model.objects.filter(
+                uuid=user_base.role_data_uuid
+            )
         except OperationalError:
             # In the future, a retry system will be implemented when the database is
             # suddenly unavailable.
             raise DatabaseConnectionAPIError()
 
         return related_data
+
+    @classmethod
+    def data_exists(cls, role_user: str, **filters) -> bool:
+        """
+        Checks if a user exists in the database.
+
+        #### Parameters:
+        - role_user: Role of the user.
+        - filters: Keyword arguments that define the filters to apply.
+
+        #### Raises:
+        - DatabaseConnectionAPIError: If there is an operational error with the
+        database.
+        """
+
+        try:
+            content_type = ContentType.objects.get(model=role_user)
+            related_model = content_type.model_class()
+
+            user_exists = related_model.objects.filter(**filters).exists()
+        except OperationalError:
+            # In the future, a retry system will be implemented when the database is
+            # suddenly unavailable.
+            raise DatabaseConnectionAPIError()
+
+        return user_exists
 
     @classmethod
     def update_role_data(
@@ -134,9 +147,7 @@ class UserRepository:
         database.
         """
 
-        role_data = cls.get_role_data(
-            user_base=user_base, uuid=user_base.role_data_uuid
-        ).first()
+        role_data = cls.get_role_data(user_base=user_base).first()
 
         try:
             for field, value in data.items():

@@ -2,7 +2,7 @@ from apps.users.models import User
 from django.db.models import QuerySet, Model
 from rest_framework_simplejwt.token_blacklist.models import OutstandingToken
 from .typing import JSONWebToken, JWTPayload
-from typing import Dict, Any, Protocol, Optional
+from typing import Dict, Any, Protocol
 
 
 class IUserRepository(Protocol):
@@ -43,25 +43,32 @@ class IUserRepository(Protocol):
         ...
 
     @classmethod
-    def get_role_data(
-        cls,
-        user_base: Optional[User] = None,
-        role: Optional[str] = None,
-        **filters,
-    ) -> QuerySet[Model]:
+    def get_role_data(cls, user_base: User) -> QuerySet[Model]:
         """
-        Retrieves the related data of a user role from the database according to
-        the provided filters.
+        Retrieves the role data of a user.
 
         #### Parameters:
         - user_base: An instance of the User model.
-        - role: Role of the user from which to retrieve the related data.
+
+        #### Raises:
+        - DatabaseConnectionAPIError: If there is an operational error with the
+        database.
+        """
+
+        ...
+
+    @classmethod
+    def data_exists(cls, role_user: str, **filters) -> bool:
+        """
+        Checks if a user exists in the database.
+
+        #### Parameters:
+        - role_user: Role of the user.
         - filters: Keyword arguments that define the filters to apply.
 
         #### Raises:
         - DatabaseConnectionAPIError: If there is an operational error with the
         database.
-        - ValueError: If the 'user' or 'role' parameter is not provided.
         """
 
         ...

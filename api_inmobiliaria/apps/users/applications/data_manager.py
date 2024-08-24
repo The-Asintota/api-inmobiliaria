@@ -31,6 +31,4 @@ class UserDataManager:
         ):
             raise PermissionDeniedAPIError()
 
-        return self._user_repository.get_role_data(
-            user_base=user_base, uuid=user_base.role_data_uuid
-        ).first()
+        return self._user_repository.get_role_data(user_base=user_base).first()

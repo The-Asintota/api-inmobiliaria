@@ -19,7 +19,7 @@ class RoleDataSerializer(ErrorMessagesSerializer):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.__user_repository = UserRepository
+        self._user_repository = UserRepository
 
     name = serializers.CharField(
         required=False,
@@ -97,12 +97,12 @@ class RoleDataSerializer(ErrorMessagesSerializer):
         Validate that the address is not in use.
         """
 
-        searcher = self.__user_repository.get_role_data(
+        data_used = self._user_repository.data_exists(
             role=UserRoles.SEARCHER.value,
             address=value,
         )
 
-        if searcher.first():
+        if data_used:
             raise serializers.ValidationError(
                 code="invalid_data",
                 detail=ERROR_MESSAGES["address_in_use"],
@@ -115,12 +115,12 @@ class RoleDataSerializer(ErrorMessagesSerializer):
         Validate that the phone number is not in use.
         """
 
-        searcher = self.__user_repository.get_role_data(
+        data_used = self._user_repository.data_exists(
             role=UserRoles.SEARCHER.value,
             phone_number=value,
         )
 
-        if searcher.first():
+        if data_used:
             raise serializers.ValidationError(
                 code="invalid_data",
                 detail=ERROR_MESSAGES["phone_in_use"],
