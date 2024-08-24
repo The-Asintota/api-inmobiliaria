@@ -78,7 +78,7 @@ class UserRepository:
         return user_list
 
     @classmethod
-    def get_role_data(cls, user_base: User) -> QuerySet[Model]:
+    def get_role_data(cls, user_base: User) -> Model:
         """
         Retrieves the role data of a user.
 
@@ -95,7 +95,7 @@ class UserRepository:
         try:
             related_data = related_model.objects.filter(
                 uuid=user_base.role_data_uuid
-            )
+            ).first()
         except OperationalError:
             # In the future, a retry system will be implemented when the database is
             # suddenly unavailable.
@@ -134,7 +134,7 @@ class UserRepository:
         cls,
         user_base: User,
         data: Dict[str, Any],
-    ) -> QuerySet[Model]:
+    ) -> Model:
         """
         Updates the role data for a user.
 

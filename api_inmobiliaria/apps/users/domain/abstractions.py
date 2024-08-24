@@ -43,7 +43,7 @@ class IUserRepository(Protocol):
         ...
 
     @classmethod
-    def get_role_data(cls, user_base: User) -> QuerySet[Model]:
+    def get_role_data(cls, user_base: User) -> Model:
         """
         Retrieves the role data of a user.
 
@@ -78,7 +78,7 @@ class IUserRepository(Protocol):
         cls,
         user_base: User,
         data: Dict[str, Any],
-    ) -> QuerySet[Model]:
+    ) -> Model:
         """
         Updates the role data for a user.
 
