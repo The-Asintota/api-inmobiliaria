@@ -66,6 +66,26 @@ class IUserRepository(Protocol):
 
         ...
 
+    @classmethod
+    def update_role_data(
+        cls,
+        user_base: User,
+        data: Dict[str, Any],
+    ) -> QuerySet[Model]:
+        """
+        Updates the role data for a user.
+
+        #### Parameters:
+        - user_base: An instance of the User model.
+        - data: Dictionary containing the data to update.
+
+        #### Raises:
+        - DatabaseConnectionAPIError: If there is an operational error with the
+        database.
+        """
+
+        ...
+
 
 class IJWTRepository(Protocol):
     """

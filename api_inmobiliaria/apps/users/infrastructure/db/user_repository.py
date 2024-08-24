@@ -115,3 +115,36 @@ class UserRepository:
             raise DatabaseConnectionAPIError()
 
         return related_data
+
+    @classmethod
+    def update_role_data(
+        cls,
+        user_base: User,
+        data: Dict[str, Any],
+    ) -> QuerySet[Model]:
+        """
+        Updates the role data for a user.
+
+        #### Parameters:
+        - user_base: An instance of the User model.
+        - data: Dictionary containing the data to update.
+
+        #### Raises:
+        - DatabaseConnectionAPIError: If there is an operational error with the
+        database.
+        """
+
+        role_data = cls.get_role_data(
+            user_base=user_base, uuid=user_base.role_data_uuid
+        ).first()
+
+        try:
+            for field, value in data.items():
+                setattr(role_data, field, value)
+            role_data.save()
+        except OperationalError:
+            # In the future, a retry system will be implemented when the database is
+            # suddenly unavailable.
+            raise DatabaseConnectionAPIError()
+
+        return role_data
