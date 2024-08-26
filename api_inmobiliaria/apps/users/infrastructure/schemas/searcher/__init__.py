@@ -1,2 +1,5 @@
-from .views import POSTSearcherSchema, GETSearcherSchema
-from .serializers import SearcherRegisterSerializerSchema
+from .views import POSTSearcherSchema, GETSearcherSchema, PATCHearcherSchema
+from .serializers import (
+    SearcherRegisterSerializerSchema,
+    RoleDataSerializerSchema,
+)

@@ -22,3 +22,24 @@ SearcherRegisterSerializerSchema = extend_schema_serializer(
         ),
     ],
 )
+
+RoleDataSerializerSchema = extend_schema_serializer(
+    examples=[
+        OpenApiExample(
+            name="data_valid",
+            summary="The role data of a user with role searcher.",
+            description=f"A valid user data. The following validations will be applied:\n- **Name and last_name:** Must not exceed {SearcherProperties.NAME_MAX_LENGTH.value} characters and must contain only letters and spaces.\n- **Email:** Must not exceed {UserProperties.EMAIL_MAX_LENGTH.value} characters, must follow standard email format and must not be in use.\n- **Identification number (cc):** Must not exceed {SearcherProperties.CC_MAX_LENGTH.value} characters, must be at least {SearcherProperties.CC_MIN_LENGTH.value} characters, must contain only numbers between 0-9 and must not be in use.\n- **Address** Must not exceed {SearcherProperties.ADDRESS_MAX_LENGTH.value} characters and must not be in use.\n- **Phone number** Must not exceed {SearcherProperties.PHONE_NUMBER_MAX_LENGTH.value} characters and must not be in use.",
+            value={
+                "base_data": {"email": "user1@email.com"},
+                "role_data": {
+                    "name": "Nuevo nombre",
+                    "last_name": "Nuevo apellido",
+                    "cc": "1234567890",
+                    "address": "Nueva dirección",
+                    "phone_number": "+57 3111111111",
+                },
+            },
+            request_only=True,
+        ),
+    ],
+)

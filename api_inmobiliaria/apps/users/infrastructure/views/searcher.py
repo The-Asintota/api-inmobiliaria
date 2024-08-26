@@ -7,6 +7,7 @@ from apps.users.infrastructure.serializers import (
 from apps.users.infrastructure.schemas.searcher import (
     POSTSearcherSchema,
     GETSearcherSchema,
+    PATCHearcherSchema,
 )
 from apps.users.applications import RegisterUser, UserDataManager
 from apps.utils.views import MethodHTTPMapped, PermissionMixin
@@ -30,18 +31,22 @@ class SearcherAPIView(MethodHTTPMapped, PermissionMixin, GenericAPIView):
     authentication_mapping = {
         "POST": [],
         "GET": [JWTAuthentication],
+        "PATCH": [JWTAuthentication],
     }
     permission_mapping = {
         "POST": [AllowAny],
         "GET": [IsAuthenticated],
+        "PATCH": [IsAuthenticated],
     }
     application_mapping = {
         "POST": RegisterUser,
         "GET": UserDataManager,
+        "PATCH": UserDataManager,
     }
     serializer_mapping = {
         "POST": SearcherRegisterUserSerializer,
         "GET": SearcherUserReadOnlySerializer,
+        "PATCH": SearcherRoleDataSerializer,
     }
 
     @GETSearcherSchema
@@ -54,10 +59,10 @@ class SearcherAPIView(MethodHTTPMapped, PermissionMixin, GenericAPIView):
         permission to read their own information.
         """
 
-        searcher: UserDataManager = self.get_application_class(
+        data_manager: UserDataManager = self.get_application_class(
             user_repository=UserRepository
         )
-        user_role = searcher.get(base_user=request.user)
+        user_role = data_manager.get(base_user=request.user)
 
         serializer_class = self.get_serializer_class()
         serializer: Serializer = serializer_class(
@@ -101,3 +106,45 @@ class SearcherAPIView(MethodHTTPMapped, PermissionMixin, GenericAPIView):
         register.searcher(data=serializer.validated_data, request=request)
 
         return Response(status=status.HTTP_201_CREATED)
+
+    @PATCHearcherSchema
+    def patch(self, request: Request, *args, **kwargs) -> Response:
+        """
+        Handle PATCH requests to update searcher user information.
+
+        This method allows the user to update their own information, waiting for a
+        PATCH request with the updated data. A successful update will consist of
+        updating the user's information in the database and returning the updated
+        information, provided the user has permission to update their own information.
+        """
+
+        serializer_class = self.get_serializer_class()
+        serializer: Serializer = serializer_class(
+            data=request.data, partial=True
+        )
+
+        if not serializer.is_valid():
+            return Response(
+                data={
+                    "code": "invalid_request_data",
+                    "detail": serializer.errors,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+                content_type="application/json",
+            )
+
+        data_manager: UserDataManager = self.get_application_class(
+            user_repository=UserRepository
+        )
+        searcher = data_manager.update(
+            data=serializer.validated_data, base_user=request.user
+        )
+        data = SearcherUserReadOnlySerializer(
+            instance=request.user, role_instance=searcher
+        ).data
+
+        return Response(
+            data=data,
+            status=status.HTTP_200_OK,
+            content_type="application/json",
+        )

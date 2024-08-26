@@ -700,6 +700,183 @@ paths:
                   summary: Database connection error
                   description: The connection to the database could not be established.
           description: '**(INTERNAL_SERVER_ERROR)** An unexpected error occurred.'
+    patch:
+      operationId: update_searcher_user
+      description: |-
+        Handle PATCH requests to update searcher user information.
+
+        This method allows the user to update their own information, waiting for a
+        PATCH request with the updated data. A successful update will consist of
+        updating the user's information in the database and returning the updated
+        information, provided the user has permission to update their own information.
+      tags:
+      - Users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSearcherRoleDataRequest'
+            examples:
+              DataValid:
+                value:
+                  base_data:
+                    email: user1@email.com
+                  role_data:
+                    name: Nuevo nombre
+                    last_name: Nuevo apellido
+                    cc: '1234567890'
+                    address: Nueva dirección
+                    phone_number: +57 3111111111
+                summary: The role data of a user with role searcher.
+                description: |-
+                  A valid user data. The following validations will be applied:
+                  - **Name and last_name:** Must not exceed 40 characters and must contain only letters and spaces.
+                  - **Email:** Must not exceed 40 characters, must follow standard email format and must not be in use.
+                  - **Identification number (cc):** Must not exceed 10 characters, must be at least 6 characters, must contain only numbers between 0-9 and must not be in use.
+                  - **Address** Must not exceed 90 characters and must not be in use.
+                  - **Phone number** Must not exceed 25 characters and must not be in use.
+
+                  Request responses that include messages in Spanish indicate that these are messages intended for use on the frontend by the client.
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSearcherRoleDataRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSearcherRoleDataRequest'
+      security:
+      - JWTAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                properties:
+                  base_data:
+                    type: object
+                  role_data:
+                    type: object
+              examples:
+                ResponseOk:
+                  value:
+                    base_data:
+                      email: user@email.com
+                    role_data:
+                      name: Nombre del usuario
+                      last_name: Apellido del usuario
+                      cc: '1234567890'
+                      phone_number: '+573111111111'
+                      address: Calle 123
+                      is_phone_verified: false
+                  summary: Get user data
+                  description: User information is displayed without showing sensitive
+                    data, it is possible that some of this data has a 'null' value.
+          description: '**(OK)** Updated user information is returned.'
+        '400':
+          content:
+            application/json:
+              schema:
+                properties:
+                  code:
+                    type: string
+                  detail:
+                    type: object
+              examples:
+                InvalidData:
+                  value:
+                    code: invalid_request_data
+                    detail:
+                      non_field_errors:
+                      - You must provide at least one field to update.
+                  summary: Empty data
+                  description: At least one piece of user data is required to proceed
+                    with the update.
+          description: '**(BAD_REQUEST)** The request data is invalid, error messages
+            are returned for each field that did not pass validations.'
+        '401':
+          content:
+            application/json:
+              schema:
+                properties:
+                  code:
+                    type: string
+                  detail:
+                    type: string
+              examples:
+                InvalidExpired:
+                  value:
+                    code: jwt_error
+                    detail: access token is invalid or expired.
+                  summary: Access token invalid or expired
+                  description: The access token is invalid or has expired.
+                TokenBlacklisted:
+                  value:
+                    code: jwt_error
+                    detail: access token is blacklisted.
+                  summary: Access token exists in the blacklist
+                  description: The access token exists in the blacklist.
+                AccessTokenNotProvided:
+                  value:
+                    code: authentication_failed
+                    detail: Authentication credentials were not provided.
+                  summary: Access token not provided
+                  description: The access token was not provided.
+          description: '**(UNAUTHORIZED)** The user''s JSON Web Token is not valid
+            for logout.'
+        '403':
+          content:
+            application/json:
+              schema:
+                properties:
+                  code:
+                    type: string
+                  detail:
+                    type: string
+              examples:
+                IsAuthenticated:
+                  value:
+                    code: permission_denied
+                    detail: The user does not have permissions to perform this action.
+                  summary: User is not authenticated
+                  description: The user is not authenticated.
+          description: '**(FORBIDDEN)** The user does not have permission to access
+            this resource.'
+        '404':
+          content:
+            application/json:
+              schema:
+                properties:
+                  code:
+                    type: string
+                  detail:
+                    type: string
+              examples:
+                UserNotFound:
+                  value:
+                    code: user_not_found
+                    detail: The token user does not exist.
+                  summary: User not found
+                  description: The user in the provided JSON Web Tokens does not exist
+                    in the database.
+          description: '**(NOT_FOUND)** Some resources necessary for this process
+            were not found in the database.'
+        '500':
+          content:
+            application/json:
+              schema:
+                properties:
+                  detail:
+                    type: string
+                  code:
+                    type: string
+              examples:
+                DatabaseConnectionError:
+                  value:
+                    code: database_connection_error
+                    detail: Unable to establish a connection with the database. Please
+                      try again later.
+                  summary: Database connection error
+                  description: The connection to the database could not be established.
+          description: '**(INTERNAL_SERVER_ERROR)** An unexpected error occurred.'
 components:
   schemas:
     AuthenticationRequest:
@@ -728,6 +905,33 @@ components:
           minLength: 1
       required:
       - refresh_token
+    PatchedSearcherRoleDataRequest:
+      type: object
+      description: Defines the fields that are required for the searcher user profile.
+      properties:
+        name:
+          type: string
+          minLength: 1
+          pattern: ^[A-Za-z\u00f1\u00d1\s]+$
+          maxLength: 40
+        last_name:
+          type: string
+          minLength: 1
+          pattern: ^[A-Za-z\u00f1\u00d1\s]+$
+          maxLength: 40
+        cc:
+          type: string
+          minLength: 6
+          pattern: ^\d+$
+          maxLength: 10
+        address:
+          type: string
+          minLength: 1
+          maxLength: 90
+        phone_number:
+          type: string
+          minLength: 1
+          maxLength: 25
     SearcherRegisterUserRequest:
       type: object
       description: Defines the fields that are required for the searcher user registration.
