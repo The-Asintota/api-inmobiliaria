@@ -49,6 +49,8 @@ paths:
             schema:
               $ref: '#/components/schemas/AuthenticationRequest'
         required: true
+      security:
+      - {}
       responses:
         '200':
           content:
@@ -59,14 +61,14 @@ paths:
                     type: string
                   refresh_token:
                     type: string
-                  role_user:
+                  user_role:
                     type: string
               examples:
                 ResponseOk:
                   value:
                     access_token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzExMDU0MzYyLCJpYXQiOjE3MTEwNDcxNjIsImp0aSI6IjY0MTE2YzgyYjhmMDQzOWJhNTJkZGZmMzgyNzQ2ZTIwIiwidXNlcl9pZCI6IjJhNmI0NTNiLWZhMmItNDMxOC05YzM1LWIwZTk2ZTg5NGI2MyJ9.gfhWpy5rYY6P3Xrg0usS6j1KhEvF1HqWMiU7AaFkp9A
                     refresh_token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTcxMTEzMzU2MiwiaWF0IjoxNzExMDQ3MTYyLCJqdGkiOiI2ZTRmNTdkMGJjNTc0NWY0OWMzODg4YjQ2YTM1OTJjNSIsInVzZXJfaWQiOiIyYTZiNDUzYi1mYTJiLTQzMTgtOWMzNS1iMGU5NmU4OTRiNjMifQ.81pQ3WftFZs5O50vGqwY2a6yPkXArQK6WKyrwus3s6A
-                    role_user: searcher
+                    user_role: searcher
                   summary: User authenticated
                   description: The user has been successfully authenticated and the
                     access and refresh tokens are returned. The access token with
@@ -205,7 +207,7 @@ paths:
               $ref: '#/components/schemas/LogoutRequest'
         required: true
       security:
-      - JWTAuthentication: []
+      - JWTAuth: []
       responses:
         '200':
           description: '**(OK)** Successfully closed session.'
@@ -330,6 +332,8 @@ paths:
             schema:
               $ref: '#/components/schemas/UpdateTokenRequest'
         required: true
+      security:
+      - {}
       responses:
         '200':
           content:
@@ -466,7 +470,7 @@ paths:
       tags:
       - Users
       security:
-      - JWTAuthentication: []
+      - JWTAuth: []
       responses:
         '200':
           content:
@@ -489,7 +493,7 @@ paths:
                       phone_number: '+573111111111'
                       address: Calle 123
                       is_phone_verified: false
-                  summary: User data
+                  summary: Get user data
                   description: User information is displayed without showing sensitive
                     data, it is possible that some of this data has a 'null' value.
           description: '**(OK)** The requested user information is returned.'
@@ -622,6 +626,8 @@ paths:
             schema:
               $ref: '#/components/schemas/SearcherRegisterUserRequest'
         required: true
+      security:
+      - {}
       responses:
         '201':
           description: '**(CREATED)** User created correctly.'
@@ -769,6 +775,17 @@ components:
       required:
       - access_token
       - refresh_token
+  securitySchemes:
+    JWTAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |-
+        To use endpoints that employ **JSON Web Token** as an authentication tool, you must enter the access token you obtained when using the endpoint (`POST api/v1/user/jwt/login/`).
+
+        **Example:**
+
+        Bearer <access_token>
 tags:
 - name: Users
   description: It comprises all the endpoints that manage all the functionality related

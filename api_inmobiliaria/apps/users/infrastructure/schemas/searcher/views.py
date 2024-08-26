@@ -16,7 +16,6 @@ from drf_spectacular.utils import (
 POSTSearcherSchema = extend_schema(
     operation_id="create_searcher_user",
     tags=["Users"],
-    auth=[],
     responses={
         201: OpenApiResponse(
             description="**(CREATED)** User created correctly."
@@ -121,7 +120,6 @@ POSTSearcherSchema = extend_schema(
 GETSearcherSchema = extend_schema(
     operation_id="get_searcher_user",
     tags=["Users"],
-    auth=[{"JWTAuthentication": []}],
     responses={
         200: OpenApiResponse(
             description="**(OK)** The requested user information is returned.",
@@ -134,7 +132,7 @@ GETSearcherSchema = extend_schema(
             examples=[
                 OpenApiExample(
                     name="response_ok",
-                    summary="User data",
+                    summary="Get user data",
                     description="User information is displayed without showing sensitive data, it is possible that some of this data has a 'null' value.",
                     value={
                         "base_data": {

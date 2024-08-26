@@ -18,6 +18,33 @@ from drf_spectacular.utils import (
     OpenApiResponse,
     OpenApiExample,
 )
+from drf_spectacular.extensions import OpenApiAuthenticationExtension
+from drf_spectacular.openapi import AutoSchema
+from typing import Dict
+
+
+class JWTAuth(OpenApiAuthenticationExtension):
+    """
+    This class is used to add the JWT authentication schema to the OpenAPI documentation.
+    """
+
+    target_class = "authentication.jwt.JWTAuthentication"
+    name = "JWTAuth"
+    match_subclasses = True
+
+    def get_security_definition(
+        self, auto_schema: AutoSchema
+    ) -> Dict[str, str]:
+        """
+        This method is used to return the JWT authentication schema.
+        """
+
+        return {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+            "description": "To use endpoints that employ **JSON Web Token** as an authentication tool, you must enter the access token you obtained when using the endpoint (`POST api/v1/user/jwt/login/`).\n\n**Example:**\n\nBearer <access_token>",
+        }
 
 
 # This constant is used when the serializer error messages are the default.
@@ -27,7 +54,6 @@ DEFAULT_ERROR_MESSAGES = CharField().error_messages
 AuthenticationSchema = extend_schema(
     operation_id="jwt_authenticate_user",
     tags=["Users"],
-    auth=[],
     responses={
         200: OpenApiResponse(
             description="**(OK)** Authenticated user.",
@@ -35,7 +61,7 @@ AuthenticationSchema = extend_schema(
                 "properties": {
                     "access_token": {"type": "string"},
                     "refresh_token": {"type": "string"},
-                    "role_user": {"type": "string"},
+                    "user_role": {"type": "string"},
                 }
             },
             examples=[
@@ -46,7 +72,7 @@ AuthenticationSchema = extend_schema(
                     value={
                         "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzExMDU0MzYyLCJpYXQiOjE3MTEwNDcxNjIsImp0aSI6IjY0MTE2YzgyYjhmMDQzOWJhNTJkZGZmMzgyNzQ2ZTIwIiwidXNlcl9pZCI6IjJhNmI0NTNiLWZhMmItNDMxOC05YzM1LWIwZTk2ZTg5NGI2MyJ9.gfhWpy5rYY6P3Xrg0usS6j1KhEvF1HqWMiU7AaFkp9A",
                         "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTcxMTEzMzU2MiwiaWF0IjoxNzExMDQ3MTYyLCJqdGkiOiI2ZTRmNTdkMGJjNTc0NWY0OWMzODg4YjQ2YTM1OTJjNSIsInVzZXJfaWQiOiIyYTZiNDUzYi1mYTJiLTQzMTgtOWMzNS1iMGU5NmU4OTRiNjMifQ.81pQ3WftFZs5O50vGqwY2a6yPkXArQK6WKyrwus3s6A",
-                        "role_user": UserRoles.SEARCHER.value,
+                        "user_role": UserRoles.SEARCHER.value,
                     },
                 ),
             ],
@@ -166,7 +192,6 @@ AuthenticationSchema = extend_schema(
 UpdateTokensSchema = extend_schema(
     operation_id="update_tokens",
     tags=["Users"],
-    auth=[],
     responses={
         200: OpenApiResponse(
             description="**(OK)** New tokens are generated.",
@@ -318,7 +343,6 @@ UpdateTokensSchema = extend_schema(
 LogoutSchema = extend_schema(
     operation_id="logout_user",
     tags=["Users"],
-    auth=[{"JWTAuthentication": []}],
     responses={
         200: OpenApiResponse(
             description="**(OK)** Successfully closed session.",
