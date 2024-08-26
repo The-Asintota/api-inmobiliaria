@@ -23,7 +23,6 @@ class Token(models.Model):
     )
 
     class Meta:
-        db_table = "token"
         verbose_name = "Token"
         verbose_name_plural = "Tokens"
         ordering = ["-date_joined"]

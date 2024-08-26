@@ -3,7 +3,7 @@ from apps.emails.domain.typing import Token
 from apps.emails.paths import TEMPLATES
 from apps.users.domain.abstractions import IUserRepository
 from apps.users.domain.typing import UserUUID
-from apps.users.models import User
+from apps.users.models import BaseUser
 from apps.utils.messages import ActionLinkManagerErrors
 from apps.view_exceptions import (
     ResourceNotFoundViewError,
@@ -41,10 +41,10 @@ class ActionLinkManager:
         self._token_repository = token_repository
         self._token_class = token_class
         self.path_send_mail = path_send_mail
-        self.user = None
+        self.base_user = None
 
     def _get_message_data(
-        self, user: User, token: Token, request: Request
+        self, base_user: BaseUser, token: Token, request: Request
     ) -> Dict[str, Any]:
         """
         Constructs and returns a dictionary containing the subject, body, and
@@ -55,7 +55,7 @@ class ActionLinkManager:
         and a unique token.
 
         #### Parameters:
-        - user: An instance of the User model.
+        - base_user: An instance of the BaseUser model.
         - token: A unique identifier that guarantees the security and validity of the
         initiated process.
         - request: This object comes from the view and contains the request
@@ -67,25 +67,25 @@ class ActionLinkManager:
             "body": render_to_string(
                 template_name=self.email_body,
                 context={
-                    "email": user.email,
+                    "email": base_user.email,
                     "domain": get_current_site(request),
                     "user_uuidb64": urlsafe_base64_encode(
-                        s=force_bytes(s=user.uuid)
+                        s=force_bytes(s=base_user.uuid)
                     ),
                     "token": token,
                 },
             ),
-            "to": [user.email],
+            "to": [base_user.email],
         }
 
     def _compose_and_dispatch(
-        self, user: User, token: Token, request: Request
+        self, base_user: BaseUser, token: Token, request: Request
     ) -> None:
         """
         Compose and send the message to the user's email.
 
         #### Parameters:
-        - user: A instance of the User model.
+        - base_user: A instance of the BaseUser model.
         - token: This is a unique identifier that guarantees the security and validity
         of the initiated process.
         - request: This object comes from the view and contains the request
@@ -93,12 +93,14 @@ class ActionLinkManager:
         """
 
         email = EmailMessage(
-            **self._get_message_data(user=user, token=token, request=request)
+            **self._get_message_data(
+                base_user=base_user, token=token, request=request
+            )
         )
         email.content_subtype = "html"
         email.send()
 
-    def send_email(self, user: User | None, request: Request) -> None:
+    def send_email(self, base_user: BaseUser | None, request: Request) -> None:
         """
         Send the message to the email of the indicated user.
 
@@ -106,14 +108,16 @@ class ActionLinkManager:
         involves rendering templates.
 
         #### Parameters:
-        - user: An instance of the User model.
+        - base_user: An instance of the BaseUser model.
         - request: This object comes from the view and contains the request
         information.
         """
 
-        token = self._token_class.make_token(user=user)
+        token = self._token_class.make_token(base_user=base_user)
         self._token_repository.create(token=token)
-        self._compose_and_dispatch(user=user, token=token, request=request)
+        self._compose_and_dispatch(
+            base_user=base_user, token=token, request=request
+        )
 
     def check_token(
         self, token: Token, user_uuid: UserUUID, request: HttpRequest
@@ -136,16 +140,16 @@ class ActionLinkManager:
         - ResourceNotFoundViewError: The user does not exist.
         """
 
-        self.user = self._user_repository.get_user_data(uuid=user_uuid).first()
+        self.base_user = self._user_repository.get_base_data(uuid=user_uuid)
 
-        if not self.user:
+        if not self.base_user:
             raise ResourceNotFoundViewError(
                 request=request,
                 template_name=TEMPLATES["account_management"]["error"],
                 context=ActionLinkManagerErrors.USER_NOT_FOUND.value,
             )
 
-        token_obj = self._token_repository.get(token=token).first()
+        token_obj = self._token_repository.get(token=token)
 
         if not token_obj:
             raise ResourceNotFoundViewError(
@@ -166,7 +170,9 @@ class ActionLinkManager:
                 context=context,
                 template_name=TEMPLATES["account_management"]["error"],
             )
-        elif not self._token_class.check_token(user=self.user, token=token):
+        elif not self._token_class.check_token(
+            user=self.base_user, token=token
+        ):
             raise TokenViewError(
                 request=request,
                 context=ActionLinkManagerErrors.TOKEN_INVALID.value,

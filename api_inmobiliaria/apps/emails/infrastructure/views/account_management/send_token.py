@@ -25,6 +25,7 @@ class SendTokenAPIView(GenericAPIView):
     permission_classes = [AllowAny]
     application_class = None
     action = None
+    _user_repository = UserRepository
 
     def get(self, request: Request, *args, **kwargs) -> Response:
         """
@@ -44,13 +45,15 @@ class SendTokenAPIView(GenericAPIView):
                 content_type="application/json",
             )
 
-        user = UserRepository.get_user_data(uuid=kwargs["user_uuid"]).first()
+        base_user = self._user_repository.get_base_data(
+            uuid=kwargs["user_uuid"]
+        )
 
         application: ActionLinkManager = self.application_class(
             token_class=TokenGenerator(),
             token_repository=TokenRepository,
         )
-        application.send_email(user=user, request=request)
+        application.send_email(base_user=base_user, request=request)
 
         return Response(
             data={

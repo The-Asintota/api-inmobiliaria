@@ -22,6 +22,7 @@ ERROR_MESSAGES = {
     "email_in_use": "Este correo electrónico ya está en uso.",
     "phone_in_use": "Este número de teléfono ya está en uso.",
     "address_in_use": "Esta dirección ya está en uso.",
+    "cc_in_use": "Este número de identificación ya está en uso.",
 }
 
 

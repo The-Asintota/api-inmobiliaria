@@ -1,5 +1,5 @@
-from apps.users.models import User
-from django.db.models import QuerySet, Model
+from apps.users.models import BaseUser
+from django.db.models import Model
 from rest_framework_simplejwt.token_blacklist.models import OutstandingToken
 from .typing import JSONWebToken, JWTPayload
 from typing import Dict, Any, Protocol
@@ -11,14 +11,16 @@ class IUserRepository(Protocol):
     """
 
     @classmethod
-    def create(cls, data: Dict[str, Any], role: str, is_active: bool) -> User:
+    def create(
+        cls, data: Dict[str, Any], user_role: str, active: bool
+    ) -> BaseUser:
         """
         Inserts a new user into the database.
 
         #### Parameters:
         - data: Dictionary containing the user's data.
-        - role: Role of the user.
-        - is_active: Boolean that indicates if the user is active or not.
+        - user_role: Role of the user.
+        - active: Boolean that indicates if the user is active or not.
 
         #### Raises:
         - DatabaseConnectionAPIError: If there is an operational error with the
@@ -28,9 +30,9 @@ class IUserRepository(Protocol):
         ...
 
     @classmethod
-    def get_user_data(cls, **filters) -> QuerySet[User]:
+    def get_base_data(cls, **filters) -> BaseUser | None:
         """
-        Retrieves a user from the database according to the provided filters.
+        Retrieves a user base data from the database based on the provided filters.
 
         #### Parameters:
         - filters: Keyword arguments that define the filters to apply.
@@ -43,12 +45,12 @@ class IUserRepository(Protocol):
         ...
 
     @classmethod
-    def get_role_data(cls, user_base: User) -> Model:
+    def get_role_data(cls, base_user: BaseUser) -> Model:
         """
         Retrieves the role data of a user.
 
         #### Parameters:
-        - user_base: An instance of the User model.
+        - base_user: An instance of the BaseUser model.
 
         #### Raises:
         - DatabaseConnectionAPIError: If there is an operational error with the
@@ -58,12 +60,27 @@ class IUserRepository(Protocol):
         ...
 
     @classmethod
-    def data_exists(cls, role_user: str, **filters) -> bool:
+    def role_data_exists(cls, user_role: str, **filters) -> bool:
         """
         Checks if a user exists in the database.
 
         #### Parameters:
-        - role_user: Role of the user.
+        - user_role: Role of the user.
+        - filters: Keyword arguments that define the filters to apply.
+
+        #### Raises:
+        - DatabaseConnectionAPIError: If there is an operational error with the
+        database.
+        """
+
+        ...
+
+    @classmethod
+    def base_data_exists(cls, **filters) -> bool:
+        """
+        Checks if a user base data exists in the database.
+
+        #### Parameters:
         - filters: Keyword arguments that define the filters to apply.
 
         #### Raises:
@@ -76,14 +93,14 @@ class IUserRepository(Protocol):
     @classmethod
     def update_role_data(
         cls,
-        user_base: User,
+        base_user: BaseUser,
         data: Dict[str, Any],
     ) -> Model:
         """
         Updates the role data for a user.
 
         #### Parameters:
-        - user_base: An instance of the User model.
+        - base_user: An instance of the BaseUser model.
         - data: Dictionary containing the data to update.
 
         #### Raises:
@@ -100,7 +117,7 @@ class IJWTRepository(Protocol):
     """
 
     @classmethod
-    def get_checklist_token(cls, **filters) -> QuerySet[OutstandingToken]:
+    def get(cls, **filters) -> OutstandingToken:
         """
         Retrieve a JWT from the database based on the provided filters and limits the
         result to the last 2 records.
@@ -116,7 +133,7 @@ class IJWTRepository(Protocol):
 
     @classmethod
     def add_checklist(
-        cls, token: JSONWebToken, payload: JWTPayload, user: User
+        cls, token: JSONWebToken, payload: JWTPayload, user: BaseUser
     ) -> None:
         """
         Associate a JSON Web Token with a user by adding it to the checklist.
@@ -127,7 +144,7 @@ class IJWTRepository(Protocol):
         #### Parameters:
         - token: A JSONWebToken.
         - payload: The payload of the token.
-        - user: An instance of the User model.
+        - user: An instance of the BaseUser model.
 
         #### Raises:
         - DatabaseConnectionAPIError: If there is an operational error with the database.

@@ -1,8 +1,7 @@
 from apps.users.domain.typing import UserUUID
 from apps.utils.generators import decode_b64
-from apps.utils.validators import is_valid_uuid
+from apps.utils.validators import is_valid_uuid, is_base64
 from rest_framework import serializers
-import base64
 
 
 class Base64UserTokenSerializer(serializers.Serializer):
@@ -14,20 +13,12 @@ class Base64UserTokenSerializer(serializers.Serializer):
     user_uuidb64 = serializers.CharField(max_length=100, required=True)
     token = serializers.CharField(max_length=100, required=True)
 
-    @staticmethod
-    def _is_base64(s: str) -> bool:
-        """
-        Check if the provided string is a valid base64 string.
-        """
-
-        try:
-            return base64.b64encode(base64.b64decode(s)).decode() == s
-        except Exception:
-
-            return False
-
     def validate_user_uuidb64(self, value: str) -> UserUUID:
-        if not self._is_base64(s=value):
+        """
+        Validate the user UUID in base 64 format.
+        """
+
+        if not is_base64(value=value):
             raise serializers.ValidationError(
                 code="invalid_data", detail="Invalid user uuidb64."
             )

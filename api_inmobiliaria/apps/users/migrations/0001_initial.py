@@ -79,7 +79,7 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.CreateModel(
-            name="User",
+            name="BaseUser",
             fields=[
                 (
                     "uuid",

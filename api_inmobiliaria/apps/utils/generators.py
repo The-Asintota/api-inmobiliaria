@@ -1,4 +1,4 @@
-from apps.users.models import User
+from apps.users.models import BaseUser
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 import base64
 import six
@@ -23,27 +23,27 @@ class TokenGenerator(PasswordResetTokenGenerator):
     ensuring that the user is indeed the one who initiated the process.
     """
 
-    def _make_hash_value(self, user: User, timestamp: int) -> str:
+    def _make_hash_value(self, base_user: BaseUser, timestamp: int) -> str:
         """
         Create a hash value using the user's id, timestamp, and active status.
         """
 
         return (
-            six.text_type(user.uuid)
+            six.text_type(base_user.uuid)
             + six.text_type(timestamp)
-            + six.text_type(user.is_active)
+            + six.text_type(base_user.is_active)
         )
 
-    def make_token(self, user: User) -> str:
+    def make_token(self, base_user: BaseUser) -> str:
         """
         Generate a token for the given user.
 
         #### Parameters:
-        - user: A instance of the User model.
+        - user: A instance of the BaseUser model.
         """
 
         token = self._make_token_with_timestamp(
-            user,
+            base_user,
             self._num_seconds(self._now()),
             self.secret,
         )

@@ -6,7 +6,7 @@ from rest_framework.serializers import Serializer
 from rest_framework.request import Request
 from rest_framework.permissions import BasePermission
 from rest_framework.generics import GenericAPIView
-from typing import Dict, List, Any, Callable, Optional
+from typing import Dict, List, Any, Callable
 
 
 class MethodHTTPMapped:

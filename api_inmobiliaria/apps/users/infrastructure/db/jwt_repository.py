@@ -1,5 +1,5 @@
 from apps.users.domain.typing import JSONWebToken, JWTPayload
-from apps.users.models import User
+from apps.users.models import BaseUser
 from apps.api_exceptions import DatabaseConnectionAPIError
 from rest_framework_simplejwt.token_blacklist.models import (
     OutstandingToken,
@@ -21,7 +21,7 @@ class JWTRepository:
     blacklist_model = BlacklistedToken
 
     @classmethod
-    def get_checklist_token(cls, **filters) -> QuerySet[OutstandingToken]:
+    def get(cls, **filters) -> OutstandingToken:
         """
         Retrieve a JWT from the database based on the provided filters and limits the
         result to the last 2 records.
@@ -34,21 +34,21 @@ class JWTRepository:
         """
 
         try:
-            tokens = (
+            token = (
                 cls.jwt_model.objects.select_related("user")
                 .filter(**filters)
-                .order_by("-created_at")[:2]
+                .first()
             )
         except OperationalError:
             # In the future, a retry system will be implemented when the database is
             # suddenly unavailable.
             raise DatabaseConnectionAPIError()
 
-        return tokens
+        return token
 
     @classmethod
     def add_checklist(
-        cls, token: JSONWebToken, payload: JWTPayload, user: User
+        cls, token: JSONWebToken, payload: JWTPayload, base_user: BaseUser
     ) -> None:
         """
         Associate a JSON Web Token with a user by adding it to the checklist.
@@ -59,7 +59,7 @@ class JWTRepository:
         #### Parameters:
         - token: A JSONWebToken.
         - payload: The payload of the token.
-        - user: An instance of the User model.
+        - base_user: An instance of the BaseUser model.
 
         #### Raises:
         - DatabaseConnectionAPIError: If there is an operational error with the database.
@@ -69,7 +69,7 @@ class JWTRepository:
             cls.jwt_model.objects.create(
                 jti=payload["jti"],
                 token=token,
-                user=user,
+                user=base_user,
                 created_at=timezone.now(),
                 expires_at=datetime_from_epoch(ts=payload["exp"]),
             )

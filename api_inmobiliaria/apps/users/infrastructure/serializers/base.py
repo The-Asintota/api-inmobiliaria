@@ -14,7 +14,7 @@ class BaseUserDataSerializer(ErrorMessagesSerializer):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.__user_repository = UserRepository
+        self._user_repository = UserRepository
 
     email = serializers.CharField(
         required=True,
@@ -53,9 +53,9 @@ class BaseUserDataSerializer(ErrorMessagesSerializer):
         Validate that the email is not in use.
         """
 
-        user = self.__user_repository.get_user_data(email=value)
+        exists = self._user_repository.base_data_exists(email=value)
 
-        if user.first():
+        if exists:
             raise serializers.ValidationError(
                 code="invalid_data",
                 detail=ERROR_MESSAGES["email_in_use"],

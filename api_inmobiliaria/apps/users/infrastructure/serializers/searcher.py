@@ -4,7 +4,7 @@ from apps.users.infrastructure.schemas.searcher import (
     SearcherRegisterSerializerSchema,
 )
 from apps.users.domain.constants import UserRoles, SearcherProperties
-from apps.users.models import User, Searcher
+from apps.users.models import BaseUser, Searcher
 from apps.utils.messages import ErrorMessagesSerializer, ERROR_MESSAGES
 from rest_framework import serializers
 from django.core.validators import RegexValidator
@@ -12,7 +12,7 @@ from phonenumber_field.serializerfields import PhoneNumberField
 from typing import Dict, Any
 
 
-class RoleDataSerializer(ErrorMessagesSerializer):
+class SearcherRoleDataSerializer(ErrorMessagesSerializer):
     """
     Defines the fields that are required for the searcher user profile.
     """
@@ -92,17 +92,35 @@ class RoleDataSerializer(ErrorMessagesSerializer):
         },
     )
 
+    def validate_cc(self, value: str) -> str:
+        """
+        Validate that the identification number is not in use.
+        """
+
+        exists = self._user_repository.role_data_exists(
+            user_role=UserRoles.SEARCHER.value,
+            cc=value,
+        )
+
+        if exists:
+            raise serializers.ValidationError(
+                code="invalid_data",
+                detail=ERROR_MESSAGES["cc_in_use"],
+            )
+
+        return value
+
     def validate_address(self, value: str) -> str:
         """
         Validate that the address is not in use.
         """
 
-        data_used = self._user_repository.data_exists(
-            role=UserRoles.SEARCHER.value,
+        exists = self._user_repository.role_data_exists(
+            user_role=UserRoles.SEARCHER.value,
             address=value,
         )
 
-        if data_used:
+        if exists:
             raise serializers.ValidationError(
                 code="invalid_data",
                 detail=ERROR_MESSAGES["address_in_use"],
@@ -115,18 +133,32 @@ class RoleDataSerializer(ErrorMessagesSerializer):
         Validate that the phone number is not in use.
         """
 
-        data_used = self._user_repository.data_exists(
-            role=UserRoles.SEARCHER.value,
+        exists = self._user_repository.role_data_exists(
+            user_role=UserRoles.SEARCHER.value,
             phone_number=value,
         )
 
-        if data_used:
+        if exists:
             raise serializers.ValidationError(
                 code="invalid_data",
                 detail=ERROR_MESSAGES["phone_in_use"],
             )
 
         return value
+
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Validate the provided attributes. This method checks if the `attrs` dictionary
+        is not empty.
+        """
+
+        if not attrs:
+            raise serializers.ValidationError(
+                code="invalid_data",
+                detail="You must provide at least one field to update.",
+            )
+
+        return attrs
 
 
 @SearcherRegisterSerializerSchema
@@ -201,7 +233,9 @@ class SearcherUserReadOnlySerializer(serializers.Serializer):
         super().__init__(*args, **kwargs)
         self.role_instance = role_instance
 
-    def to_representation(self, instance: User) -> Dict[str, Any]:
+    def to_representation(
+        self, instance: BaseUser
+    ) -> Dict[str, Dict[str, Any]]:
 
         phone_number = self.role_instance.phone_number
 

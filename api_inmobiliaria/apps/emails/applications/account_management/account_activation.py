@@ -3,7 +3,7 @@ from apps.emails.domain.constants import SubjectsMail
 from apps.emails.domain.typing import Token
 from apps.emails.paths import TEMPLATES
 from apps.users.domain.typing import UserUUID
-from apps.users.models import User
+from apps.users.models import BaseUser
 from apps.utils.messages import ActivationErrors
 from apps.api_exceptions import (
     AccountActivationAPIError,
@@ -23,19 +23,19 @@ class AccountActivation(ActionLinkManager):
     email_body = TEMPLATES["account_management"]["activation"]["email_body"]
     action = "activar tu cuenta"
 
-    def send_email(self, user: User | None, request: Request) -> None:
+    def send_email(self, base_user: BaseUser | None, request: Request) -> None:
 
-        if not user:
+        if not base_user:
             raise ResourceNotFoundAPIError(
                 code="user_not_found",
                 detail=ActivationErrors.USER_NOT_FOUND.value,
             )
-        elif user.is_active:
+        elif base_user.is_active:
             raise AccountActivationAPIError(
                 detail=ActivationErrors.ACTIVE_ACCOUNT.value
             )
 
-        super().send_email(user=user, request=request)
+        super().send_email(base_user=base_user, request=request)
 
     def check_token(
         self, token: Token, user_uuid: UserUUID, request: HttpRequest
@@ -43,5 +43,5 @@ class AccountActivation(ActionLinkManager):
 
         super().check_token(token=token, user_uuid=user_uuid, request=request)
 
-        self.user.is_active = True
-        self.user.save()
+        self.base_user.is_active = True
+        self.base_user.save()

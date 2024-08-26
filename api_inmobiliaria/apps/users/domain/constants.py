@@ -17,9 +17,9 @@ class UserRoles(Enum):
 USER_ROLE_PERMISSIONS = {
     UserRoles.SEARCHER.value: {
         "jwt_auth": "token_blacklist.add_outstandingtoken",
-        "change_data": "users.change_user",
-        "delete_data": "users.delete_user",
-        "view_data": "users.view_user",
+        "change_data": "users.change_baseuser",
+        "delete_data": "users.delete_baseuser",
+        "view_data": "users.view_baseuser",
     },
 }
 

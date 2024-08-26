@@ -8,8 +8,8 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from apps.users.domain.constants import UserProperties, SearcherProperties
-from uuid import uuid4
 from typing import Dict, Any
+from uuid import uuid4
 
 
 class UserManager(BaseUserManager):
@@ -103,11 +103,14 @@ class UserManager(BaseUserManager):
         return self._create_user(base_data=base_data)
 
 
-class User(AbstractBaseUser, PermissionsMixin):
+class BaseUser(AbstractBaseUser, PermissionsMixin):
     """
-    Represents a user in the system with authentication and authorization
-    capabilities. This model includes a `generic relationship` to associate the user
-    with different types of role data.
+    This object encapsulates the `base data` of a user, which is essential for
+    authentication, permission validation and security processes.
+
+    It also includes a `generic relationship` that allows the association of a user
+    role data. This relationship facilitates the linking with different objects that
+    encapsulate the data of the different roles that a user can have in the system.
     """
 
     uuid = models.UUIDField(
@@ -157,7 +160,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     REQUIRED_FIELDS = []
 
     class Meta:
-        db_table = "user"
         verbose_name = "user"
         verbose_name_plural = "users"
 
@@ -171,7 +173,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 class Searcher(models.Model):
     """
-    This model represents a user with the role `seacher`.
+    This object encapsulates the `role data` of a searcher user.
     """
 
     uuid = models.UUIDField(db_column="uuid", default=uuid4, primary_key=True)
@@ -213,7 +215,6 @@ class Searcher(models.Model):
     )
 
     class Meta:
-        db_table = "searcher"
         verbose_name = "searcher"
         verbose_name_plural = "searchers"
 

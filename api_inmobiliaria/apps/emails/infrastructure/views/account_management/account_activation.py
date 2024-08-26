@@ -29,21 +29,6 @@ class AccountActivationView(View):
     serializer_class = Base64UserTokenSerializer
     path_send_mail = None
 
-    @staticmethod
-    def _handle_invalid_request(
-        request: HttpRequest, status_code: int
-    ) -> HttpResponse:
-        """
-        Handles invalid requests by rendering an error page.
-        """
-
-        return render(
-            request=request,
-            template_name=TEMPLATES["account_management"]["error"],
-            context=ActionLinkManagerErrors.DEFAULT.value,
-            status=status_code,
-        )
-
     def get(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
         """
         Handles the GET request to check the validity of the token. The token is used
@@ -53,9 +38,11 @@ class AccountActivationView(View):
         serializer = self.serializer_class(data=kwargs)
 
         if not serializer.is_valid():
-            return self._handle_invalid_request(
+            return render(
                 request=request,
-                status_code=status.HTTP_400_BAD_REQUEST,
+                template_name=TEMPLATES["account_management"]["error"],
+                context=ActionLinkManagerErrors.DEFAULT.value,
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         try:
@@ -70,9 +57,11 @@ class AccountActivationView(View):
                 user_uuid=serializer.validated_data["user_uuidb64"],
             )
         except DatabaseConnectionAPIError:
-            return self._handle_invalid_request(
+            return render(
                 request=request,
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                template_name=TEMPLATES["account_management"]["error"],
+                context=ActionLinkManagerErrors.DEFAULT.value,
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
         return render(

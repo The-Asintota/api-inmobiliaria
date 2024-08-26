@@ -1,4 +1,3 @@
-from apps.users.models import User
 from authentication.jwt import AccessToken, RefreshToken, Token
 from typing import Dict
 
@@ -15,7 +14,7 @@ class JWTLogout:
 
         #### Parameters:
         - data: A dictionary containing the access and refresh token payloads.
-        - user: An instance of the User model.
+        - user: An instance of the BaseUser model.
         """
 
         refresh_token: AccessToken = data["refresh_token"]

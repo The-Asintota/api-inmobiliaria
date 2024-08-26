@@ -1,6 +1,6 @@
 from apps.users.infrastructure.db import JWTRepository, UserRepository
 from apps.users.domain.typing import JWTPayload
-from apps.users.models import User
+from apps.users.models import BaseUser
 from apps.utils.messages import JWTErrorMessages
 from apps.api_exceptions import (
     AuthenticationFailedAPIError,
@@ -24,14 +24,14 @@ class Token(BaseToken):
     JWT.
     """
 
-    jwt_repository: JWTRepository
+    _jwt_repository: JWTRepository
 
     def __init__(
         self,
         token: str | None = None,
         payload: JWTPayload = None,
         verify: bool = True,
-        user: User = None,
+        base_user: BaseUser = None,
     ) -> None:
         """
         !!!! IMPORTANT !!!! MUST raise a TokenError with a user-facing error
@@ -39,7 +39,7 @@ class Token(BaseToken):
         to use.
         """
 
-        self.user = user
+        self.base_user = base_user
         self.payload = payload
 
         if self.token_type is None or self.lifetime is None:
@@ -78,8 +78,8 @@ class Token(BaseToken):
         Saves the token to the outstanding token list.
         """
 
-        self.jwt_repository.add_checklist(
-            token=str(self), payload=self.payload, user=self.user
+        self._jwt_repository.add_checklist(
+            token=str(self), payload=self.payload, base_user=self.base_user
         )
 
 
@@ -90,7 +90,7 @@ class BlacklistMixin:
 
     payload: Dict[str, Any]
     token_type: str
-    jwt_repository = JWTRepository
+    _jwt_repository = JWTRepository
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
@@ -107,7 +107,7 @@ class BlacklistMixin:
 
         jti = self.payload[api_settings.JTI_CLAIM]
 
-        if self.jwt_repository.exists_in_blacklist(jti=jti):
+        if self._jwt_repository.exists_in_blacklist(jti=jti):
             message = JWTErrorMessages.BLACKLISTED.value
 
             raise TokenError(message.format(token_type=self.token_type))
@@ -121,7 +121,7 @@ class BlacklistMixin:
         jti = self.payload[api_settings.JTI_CLAIM]
 
         # Ensure outstanding token exists with given jti
-        token = self.jwt_repository.get_checklist_token(jti=jti).first()
+        token = self._jwt_repository.get(jti=jti)
 
         if not token:
             message = JWTErrorMessages.TOKEN_NOT_FOUND.value
@@ -131,7 +131,7 @@ class BlacklistMixin:
                 detail=message["detail"].format(token_type=self.token_type),
             )
 
-        return self.jwt_repository.add_blacklist(token=token)
+        return self._jwt_repository.add_blacklist(token=token)
 
 
 class AccessToken(Token, BlacklistMixin):
@@ -155,16 +155,18 @@ class AccessToken(Token, BlacklistMixin):
 
     def __init__(
         self,
-        user: User = None,
+        base_user: BaseUser = None,
         refresh_token: Token = None,
         payload: JWTPayload = None,
         token: Token = None,
         verify: bool = True,
     ) -> None:
-        super().__init__(token=token, payload=payload, verify=verify, user=user)
+        super().__init__(
+            token=token, payload=payload, verify=verify, base_user=base_user
+        )
         self.refresh_token = refresh_token
 
-        if self.refresh_token and self.user:
+        if self.refresh_token and self.base_user:
             # Create a new access token from a refresh token
             # Copies all claims present in this refresh token to the new access token
             # except those claims listed in the `no_copy_claims` attribute.
@@ -177,13 +179,13 @@ class AccessToken(Token, BlacklistMixin):
                 self[claim] = value
 
             # Set the user_id and role claims
-            user_id = getattr(self.user, api_settings.USER_ID_FIELD)
+            user_id = getattr(self.base_user, api_settings.USER_ID_FIELD)
 
             if not isinstance(user_id, int):
                 user_id = str(user_id)
 
             self[api_settings.USER_ID_CLAIM] = user_id
-            self["role_user"] = self.user.content_type.model
+            self["user_role"] = self.base_user.content_type.model
 
             self.save()
 
@@ -204,22 +206,24 @@ class RefreshToken(Token, BlacklistMixin):
 
     def __init__(
         self,
-        user: User = None,
+        base_user: BaseUser = None,
         token: Token = None,
         payload: JWTPayload = None,
         verify: bool = True,
     ) -> None:
-        super().__init__(token=token, payload=payload, verify=verify, user=user)
+        super().__init__(
+            token=token, payload=payload, verify=verify, base_user=base_user
+        )
 
-        if not self.token and self.user:
+        if not self.token and self.base_user:
             # Set the user_id and role claims
-            user_id = getattr(self.user, api_settings.USER_ID_FIELD)
+            user_id = getattr(self.base_user, api_settings.USER_ID_FIELD)
 
             if not isinstance(user_id, int):
                 user_id = str(user_id)
 
             self[api_settings.USER_ID_CLAIM] = user_id
-            self["role_user"] = self.user.content_type.model
+            self["user_role"] = self.base_user.content_type.model
 
             self.save()
 
@@ -234,9 +238,7 @@ class JWTAuthentication(BaseJWTuthentication):
     JWTAuthentication is a class that handles JSON web token authentication.
     """
 
-    def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
-        self._user_repository = UserRepository
+    _user_repository = UserRepository
 
     def get_validated_token(self, raw_token: bytes) -> Token:
         """
@@ -250,7 +252,7 @@ class JWTAuthentication(BaseJWTuthentication):
             except TokenError as e:
                 raise JWTAPIError(detail=e.args[0])
 
-    def get_user(self, validated_token: Token) -> User:
+    def get_user(self, validated_token: Token) -> BaseUser:
         """
         Attempts to find and return a user using the given validated token.
         """
@@ -262,18 +264,18 @@ class JWTAuthentication(BaseJWTuthentication):
                 detail="Token contained no recognizable user identification"
             )
 
-        user = self._user_repository.get_user_data(
+        base_user = self._user_repository.get_base_data(
             uuid=user_uuid, is_active=True, is_deleted=False
-        ).first()
+        )
 
-        if not user:
+        if not base_user:
             message = JWTErrorMessages.USER_NOT_FOUND.value
 
             raise ResourceNotFoundAPIError(
                 code=message["code"], detail=message["detail"]
             )
 
-        if not user.is_active:
+        if not base_user.is_active:
             raise AuthenticationFailedAPIError(
                 detail=JWTErrorMessages.INACTIVE_ACCOUNT.value
             )
@@ -281,9 +283,9 @@ class JWTAuthentication(BaseJWTuthentication):
         if api_settings.CHECK_REVOKE_TOKEN:
             if validated_token.get(
                 api_settings.REVOKE_TOKEN_CLAIM
-            ) != get_md5_hash_password(user.password):
+            ) != get_md5_hash_password(base_user.password):
                 raise AuthenticationFailedAPIError(
                     detail="The user's password has been changed.",
                 )
 
-        return user
+        return base_user

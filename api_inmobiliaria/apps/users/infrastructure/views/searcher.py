@@ -2,6 +2,7 @@ from apps.users.infrastructure.db import UserRepository
 from apps.users.infrastructure.serializers import (
     SearcherRegisterUserSerializer,
     SearcherUserReadOnlySerializer,
+    SearcherRoleDataSerializer,
 )
 from apps.users.infrastructure.schemas.searcher import (
     POSTSearcherSchema,
@@ -26,9 +27,18 @@ class SearcherAPIView(MethodHTTPMapped, PermissionMixin, GenericAPIView):
     permissions, and serializers based on the HTTP method of the incoming request.
     """
 
-    authentication_mapping = {"POST": [], "GET": [JWTAuthentication]}
-    permission_mapping = {"POST": [AllowAny], "GET": [IsAuthenticated]}
-    application_mapping = {"POST": RegisterUser, "GET": UserDataManager}
+    authentication_mapping = {
+        "POST": [],
+        "GET": [JWTAuthentication],
+    }
+    permission_mapping = {
+        "POST": [AllowAny],
+        "GET": [IsAuthenticated],
+    }
+    application_mapping = {
+        "POST": RegisterUser,
+        "GET": UserDataManager,
+    }
     serializer_mapping = {
         "POST": SearcherRegisterUserSerializer,
         "GET": SearcherUserReadOnlySerializer,
@@ -47,11 +57,11 @@ class SearcherAPIView(MethodHTTPMapped, PermissionMixin, GenericAPIView):
         searcher: UserDataManager = self.get_application_class(
             user_repository=UserRepository
         )
-        role_user = searcher.get(user_base=request.user)
+        user_role = searcher.get(base_user=request.user)
 
         serializer_class = self.get_serializer_class()
         serializer: Serializer = serializer_class(
-            instance=request.user, role_instance=role_user
+            instance=request.user, role_instance=user_role
         )
 
         return Response(

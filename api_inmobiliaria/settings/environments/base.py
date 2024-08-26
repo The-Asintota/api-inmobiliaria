@@ -112,8 +112,8 @@ USE_TZ = True
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
-# Custom User model
-AUTH_USER_MODEL = "users.User"
+# Custom BaseUser model
+AUTH_USER_MODEL = "users.BaseUser"
 
 
 # Model Backend
@@ -199,15 +199,6 @@ SPECTACULAR_SETTINGS = {
     "SWAGGER_UI_SETTINGS": {
         "persistAuthorization": True,
     },
-    "SECURITY_DEFINITIONS": [
-        {
-            "JWTAuthentication": {
-                "type": "http",
-                "scheme": "bearer",
-                "bearerFormat": "JWT",
-            }
-        }
-    ],
     "COMPONENT_SPLIT_REQUEST": True,
     "LICENSE": {
         "name": "MIT License",

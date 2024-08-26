@@ -1,11 +1,11 @@
 from django.contrib import admin
-from .models import User, Searcher
+from .models import BaseUser, Searcher
 
 
-@admin.register(User)
+@admin.register(BaseUser)
 class UserAdminPanel(admin.ModelAdmin):
     """
-    Admin panel configuration for the User model.
+    Admin panel configuration for the BaseUser model.
     """
 
     list_display = [

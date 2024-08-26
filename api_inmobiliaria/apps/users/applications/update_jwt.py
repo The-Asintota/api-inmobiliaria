@@ -33,13 +33,13 @@ class JWTUpdate:
         - ResourceNotFoundAPIError: If the user does not exist.
         """
 
-        user = self._user_repository.get_user_data(
+        base_user = self._user_repository.get_base_data(
             uuid=refresh_token.payload["user_uuid"],
             is_active=True,
             is_deleted=False,
-        ).first()
+        )
 
-        if not user:
+        if not base_user:
             message = JWTErrorMessages.USER_NOT_FOUND.value
 
             raise ResourceNotFoundAPIError(
@@ -49,9 +49,9 @@ class JWTUpdate:
 
         refresh_token.blacklist()
 
-        new_refresh_token = self.refresh_token_class(user=user)
+        new_refresh_token = self.refresh_token_class(base_user=base_user)
         new_access_token = self.access_token_class(
-            user=user, refresh_token=new_refresh_token
+            base_user=base_user, refresh_token=new_refresh_token
         )
 
         return {

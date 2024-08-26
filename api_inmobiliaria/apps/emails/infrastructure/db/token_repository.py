@@ -2,7 +2,6 @@ from apps.emails.domain.typing import Token
 from apps.emails import models
 from apps.api_exceptions import DatabaseConnectionAPIError
 from django.db import OperationalError
-from django.db.models import QuerySet
 
 
 class TokenRepository:
@@ -11,7 +10,7 @@ class TokenRepository:
     or queries related to a token.
     """
 
-    __model = models.Token
+    _model = models.Token
 
     @classmethod
     def create(cls, token: Token) -> None:
@@ -26,12 +25,12 @@ class TokenRepository:
         """
 
         try:
-            cls.__model.objects.create(token=token)
+            cls._model.objects.create(token=token)
         except OperationalError:
             raise DatabaseConnectionAPIError()
 
     @classmethod
-    def get(cls, **filters) -> QuerySet[models.Token]:
+    def get(cls, **filters) -> models.Token:
         """
         Retrieve a token from the database based on the provided filters.
 
@@ -43,8 +42,12 @@ class TokenRepository:
         """
 
         try:
-            tokens = cls.__model.objects.defer("date_joined").filter(**filters)
+            token = (
+                cls._model.objects.defer("date_joined")
+                .filter(**filters)
+                .first()
+            )
         except OperationalError:
             raise DatabaseConnectionAPIError()
 
-        return tokens
+        return token
