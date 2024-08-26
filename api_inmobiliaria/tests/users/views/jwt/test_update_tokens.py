@@ -1,5 +1,5 @@
 from apps.users.domain.constants import UserRoles
-from apps.users.models import User
+from apps.users.models import BaseUser
 from apps.utils.messages import JWTErrorMessages
 from apps.api_exceptions import (
     DatabaseConnectionAPIError,
@@ -45,11 +45,11 @@ class TestUpdateTokensAPIView:
     client = Client()
 
     @pytest.mark.parametrize(
-        argnames="role_user",
+        argnames="user_role",
         argvalues=[UserRoles.SEARCHER.value],
         ids=["searcher_user"],
     )
-    def test_if_valid_data(self, role_user: str) -> None:
+    def test_if_valid_data(self, user_role: str) -> None:
         """
         This test is responsible for validating the expected behavior of the view
         when the request data is valid.
@@ -57,10 +57,10 @@ class TestUpdateTokensAPIView:
 
         # Creating the JWTs to be used in the test
         user, _, _ = self.user_factory.user(
-            role_user=role_user, active=True, save=True, add_perm=False
+            user_role=user_role, active=True, save=True, add_perm=False
         )
         jwt_data = self.jwt_factory.access_and_refresh(
-            role_user=user.content_type.model,
+            user_role=user.content_type.model,
             user=user,
             exp_access=True,
             exp_refresh=False,
@@ -239,14 +239,14 @@ class TestUpdateTokensAPIView:
             active=True, save=True, add_perm=False
         )
         access_token = self.jwt_factory.access(
-            role_user=user.content_type.model,
+            user_role=user.content_type.model,
             user=user,
             exp=True,
             save=True,
             add_blacklist=access_blacklist,
         ).get("token")
         refresh_token = self.jwt_factory.refresh(
-            role_user=user.content_type.model,
+            user_role=user.content_type.model,
             user=user,
             exp=False,
             save=True,
@@ -309,7 +309,7 @@ class TestUpdateTokensAPIView:
             active=True, save=True, add_perm=False
         )
         jwt_data = self.jwt_factory.access_and_refresh(
-            role_user=user.content_type.model,
+            user_role=user.content_type.model,
             user=user,
             exp_access=True,
             exp_refresh=False,
@@ -341,13 +341,13 @@ class TestUpdateTokensAPIView:
         """
 
         # Mocking the methods
-        get_user_data: Mock = user_repository_mock.get_user_data
-        get_user_data.return_value = empty_queryset(model=User)
+        get_base_data: Mock = user_repository_mock.get_base_data
+        get_base_data.return_value = empty_queryset(model=BaseUser)
 
         # Creating the JWTs to be used in the test
         jwt_data = self.jwt_factory.access_and_refresh(
-            user=User(),
-            role_user="AnyUser",
+            user=BaseUser(),
+            user_role="AnyUser",
             exp_access=True,
             exp_refresh=False,
             save=False,
@@ -378,13 +378,13 @@ class TestUpdateTokensAPIView:
         """
 
         # Mocking the methods
-        get_user_data: Mock = user_repository_mock.get_user_data
-        get_user_data.side_effect = DatabaseConnectionAPIError
+        get_base_data: Mock = user_repository_mock.get_base_data
+        get_base_data.side_effect = DatabaseConnectionAPIError
 
         # Creating the JWTs to be used in the test
         jwt_data = self.jwt_factory.access_and_refresh(
-            user=User(),
-            role_user="AnyUser",
+            user=BaseUser(),
+            user_role="AnyUser",
             exp_access=True,
             exp_refresh=False,
             save=False,

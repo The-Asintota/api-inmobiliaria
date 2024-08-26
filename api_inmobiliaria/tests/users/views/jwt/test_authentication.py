@@ -32,12 +32,12 @@ class TestAuthenticationAPIView:
     client = Client()
 
     @pytest.mark.parametrize(
-        argnames="role_user",
+        argnames="user_role",
         argvalues=[UserRoles.SEARCHER.value],
         ids=["searcher_user"],
     )
     def test_if_valid_data(
-        self, role_user: str, setup_database: Callable
+        self, user_role: str, setup_database: Callable
     ) -> None:
         """
         This test is responsible for validating the expected behavior of the view
@@ -46,7 +46,7 @@ class TestAuthenticationAPIView:
 
         # Creating the user data to be used in the test
         _, _, data = self.user_factory.user(
-            role_user=role_user, active=True, save=True, add_perm=True
+            user_role=user_role, active=True, save=True, add_perm=True
         )
 
         # Simulating the request
@@ -61,7 +61,7 @@ class TestAuthenticationAPIView:
         assert response.status_code == status.HTTP_200_OK
         assert "access_token" in response.data
         assert "refresh_token" in response.data
-        assert "role_user" in response.data
+        assert "user_role" in response.data
 
     @pytest.mark.parametrize(
         argnames="credentials, error_messages",
@@ -140,12 +140,12 @@ class TestAuthenticationAPIView:
         assert response.data["detail"] == response_data_expected
 
     @pytest.mark.parametrize(
-        argnames="role_user",
+        argnames="user_role",
         argvalues=[UserRoles.SEARCHER.value],
         ids=["searcher_user"],
     )
     def test_if_inactive_user_account(
-        self, role_user: str, setup_database: Callable
+        self, user_role: str, setup_database: Callable
     ) -> None:
         """
         This test is responsible for validating the expected behavior of the view
@@ -154,7 +154,7 @@ class TestAuthenticationAPIView:
 
         # Creating the user data to be used in the test
         _, _, data = self.user_factory.user(
-            role_user=role_user, active=False, save=True, add_perm=True
+            user_role=user_role, active=False, save=True, add_perm=True
         )
 
         # Simulating the request
@@ -175,11 +175,11 @@ class TestAuthenticationAPIView:
         assert response.data["detail"] == response_data_expected
 
     @pytest.mark.parametrize(
-        argnames="role_user",
+        argnames="user_role",
         argvalues=[UserRoles.SEARCHER.value],
         ids=["searcher_user"],
     )
-    def test_if_user_has_not_permission(self, role_user: str) -> None:
+    def test_if_user_has_not_permission(self, user_role: str) -> None:
         """
         This test is responsible for validating the expected behavior of the view
         when the user does not have the necessary permissions to perform the action.
@@ -187,7 +187,7 @@ class TestAuthenticationAPIView:
 
         # Creating the user data to be used in the test
         _, _, data = self.user_factory.user(
-            role_user=role_user, active=True, save=True, add_perm=False
+            user_role=user_role, active=True, save=True, add_perm=False
         )
 
         # Simulating the request
@@ -207,7 +207,7 @@ class TestAuthenticationAPIView:
         assert response.data["code"] == response_code_expected
         assert response.data["detail"] == response_data_expected
 
-    @patch("apps.backend.UserRepository")
+    @patch("apps.backend.EmailBackend._user_repository")
     def test_if_conection_db_failed(self, user_repository_mock: Mock) -> None:
         """
         Test that validates the expected behavior of the view when the connection to
@@ -215,8 +215,8 @@ class TestAuthenticationAPIView:
         """
 
         # Mocking the methods
-        get_user_data: Mock = user_repository_mock.get_user_data
-        get_user_data.side_effect = DatabaseConnectionAPIError
+        get_base_data: Mock = user_repository_mock.get_base_data
+        get_base_data.side_effect = DatabaseConnectionAPIError
 
         # Simulating the request
         credentials = {"email": "user1@emial.com", "password": "contraseña1234"}

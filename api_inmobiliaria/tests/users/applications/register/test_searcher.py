@@ -1,7 +1,7 @@
 from apps.users.infrastructure.db import UserRepository
 from apps.users.applications import RegisterUser
 from apps.users.domain.constants import USER_ROLE_PERMISSIONS, UserRoles
-from apps.users.models import User, Searcher
+from apps.users.models import BaseUser, Searcher
 from apps.emails.domain.constants import SubjectsMail
 from apps.api_exceptions import DatabaseConnectionAPIError
 from tests.factory import UserFactory
@@ -34,7 +34,7 @@ class TestRegisterSearcherApplication:
         )
 
         # Asserting that the user does not exist in the database
-        assert not User.objects.filter(email=data["email"]).exists()
+        assert not BaseUser.objects.filter(email=data["email"]).exists()
         assert not Searcher.objects.filter(name=data["name"]).exists()
 
         # Instantiating the application and calling the method
@@ -43,7 +43,7 @@ class TestRegisterSearcherApplication:
         )
 
         # Asserting that the user was created successfully
-        user = User.objects.filter(email=data["email"]).first()
+        user = BaseUser.objects.filter(email=data["email"]).first()
         role = Searcher.objects.filter(name=data["name"]).first()
         assert user and role
 

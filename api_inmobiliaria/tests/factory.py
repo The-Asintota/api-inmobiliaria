@@ -11,7 +11,7 @@ from apps.users.domain.typing import (
     JWTPayload,
     UserUUID,
 )
-from apps.users.models import User
+from apps.users.models import BaseUser
 from apps.emails.models import Token
 from apps.utils.generators import TokenGenerator
 from tests.utils import fake
@@ -39,22 +39,22 @@ class UserFactory:
     Factory in charge of creating users with false data.
     """
 
-    model = User
+    model = BaseUser
 
     @classmethod
     def _create_user(
-        cls, data: Dict[str, Dict[str, Any]], role_user: str, active: bool
-    ) -> Tuple[User, Model]:
+        cls, data: Dict[str, Dict[str, Any]], user_role: str, active: bool
+    ) -> Tuple[BaseUser, Model]:
         """
         This method creates a user with the provided data in the database.
 
         #### Parameters:
         - data: The data to create the user.
-        - role_user: The role of the user.
+        - user_role: The role of the user.
         - active: If the user should be active.
         """
 
-        related_model = ContentType.objects.get(model=role_user).model_class()
+        related_model = ContentType.objects.get(model=user_role).model_class()
         role_user_instance = related_model.objects.create(**data["role_data"])
 
         password = data["base_data"].pop("password")
@@ -69,28 +69,28 @@ class UserFactory:
         return base_user_instance, role_user_instance
 
     @classmethod
-    def _assign_permissions(cls, user: User, role_user: str) -> None:
+    def _assign_permissions(cls, user: BaseUser, user_role: str) -> None:
         """
         This method assigns the permissions of the provided role to the user.
 
         #### Parameters:
-        - user: An instance of the User model.
-        - role_user: The role of the user.
+        - user: An instance of the BaseUser model.
+        - user_role: The role of the user.
         """
 
-        group = Group.objects.get(name=role_user)
+        group = Group.objects.get(name=user_role)
         user.groups.add(group)
         user.save()
 
     @classmethod
     def _get_data(
-        cls, role_user: str, **data: Dict[str, Any]
+        cls, user_role: str, **data: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
         This method returns the data for the user creation.
 
         #### Parameters:
-        - role_user: The role of the user.
+        - user_role: The role of the user.
         - data: The data to create the user.
         """
 
@@ -107,38 +107,38 @@ class UserFactory:
             }
         }
 
-        return data[role_user]
+        return data[user_role]
 
     @classmethod
     def user(
         cls,
-        role_user: str,
+        user_role: str,
         active: bool,
         add_perm: bool,
         save: bool,
         **data: Dict[str, Any],
-    ) -> Tuple[User, Model, Dict[str, Any]]:
+    ) -> Tuple[BaseUser, Model, Dict[str, Any]]:
         """
         This method creates a user with the provided data.
 
         #### Parameters:
-        - role_user: The role of the user.
+        - user_role: The role of the user.
         - save: If the user should be saved in the database.
         - add_perm: If the user should have the permissions assigned.
         - active: If the user should be active.
         - data: The data to create the user.
 
         #### Returns:
-        - A tuple of an instance of the User models and the model of the indicated
+        - A tuple of an instance of the BaseUser models and the model of the indicated
         role or "None" and the user data.
         """
 
         method_map = {
             UserRoles.SEARCHER.value: cls.searcher_user,
         }
-        user_data = cls._get_data(role_user=role_user, **data)
+        user_data = cls._get_data(user_role=user_role, **data)
 
-        return method_map[role_user](
+        return method_map[user_role](
             active=active, add_perm=add_perm, save=save, **user_data
         )
 
@@ -149,7 +149,7 @@ class UserFactory:
         active: bool,
         add_perm: bool,
         **data: Dict[str, Any],
-    ) -> Tuple[User, Model, Dict[str, Any]]:
+    ) -> Tuple[BaseUser, Model, Dict[str, Any]]:
         """
         This method creates a searcher user with the provided data.
 
@@ -165,11 +165,11 @@ class UserFactory:
         """
 
         base_user = None
-        role_user = None
-        data = cls._get_data(role_user=UserRoles.SEARCHER.value, **data)
+        user_role = None
+        data = cls._get_data(user_role=UserRoles.SEARCHER.value, **data)
 
         if save:
-            base_user, role_user = cls._create_user(
+            base_user, user_role = cls._create_user(
                 data={
                     "base_data": {
                         "email": data["email"],
@@ -184,15 +184,15 @@ class UserFactory:
                     },
                 },
                 active=active,
-                role_user=UserRoles.SEARCHER.value,
+                user_role=UserRoles.SEARCHER.value,
             )
 
             if add_perm:
                 cls._assign_permissions(
-                    user=base_user, role_user=UserRoles.SEARCHER.value
+                    user=base_user, user_role=UserRoles.SEARCHER.value
                 )
 
-        return base_user, role_user, data
+        return base_user, user_role, data
 
 
 class TokenFactory:
@@ -202,15 +202,17 @@ class TokenFactory:
     processes initiated.
     """
 
-    def __init__(self, user: User) -> None:
-        self.value = TokenGenerator().make_token(user=user)
+    _model = Token
+
+    def __init__(self, base_user: BaseUser) -> None:
+        self.value = TokenGenerator().make_token(base_user=base_user)
 
     def save(self) -> Token:
         """
         This method saves the token in the database.
         """
 
-        return Token.objects.create(token=self.value)
+        return self._model.objects.create(token=self.value)
 
     def __str__(self) -> str:
         return self.value
@@ -221,12 +223,12 @@ class JWTFactory:
     Factory for the JWT tokens.
     """
 
-    jwt_model = OutstandingToken
-    blacklist_model = BlacklistedToken
+    _model = OutstandingToken
+    _blacklist_model = BlacklistedToken
 
     @staticmethod
     def _get_payload(
-        token_type: str, exp: datetime, user_uuid: UserUUID, role_user: str
+        token_type: str, exp: datetime, user_uuid: UserUUID, user_role: str
     ) -> JWTPayload:
         """
         This method returns the payload for a token.
@@ -244,15 +246,15 @@ class JWTFactory:
             "iat": datetime_to_epoch(dt=aware_utcnow()),
             "jti": uuid4().hex,
             "user_uuid": user_uuid,
-            "role_user": role_user,
+            "user_role": user_role,
         }
 
     @classmethod
     def _create(
         cls,
         save: bool,
-        user: User,
-        role_user: str,
+        user: BaseUser,
+        user_role: str,
         add_blacklist: bool,
         token_type: str = None,
         exp: datetime = None,
@@ -264,8 +266,8 @@ class JWTFactory:
         #### Parameters:
         - token_type: The type of token to create.
         - exp: The expiration date of the token.
-        - role_user: The role of the user.
-        - user: An instance of the User model.
+        - user_role: The role of the user.
+        - user: An instance of the BaseUser model.
         - save: If the token should be saved in the database.
         - payload: The payload of the token.
         """
@@ -276,7 +278,7 @@ class JWTFactory:
             else cls._get_payload(
                 user_uuid=user.uuid.__str__(),
                 token_type=token_type,
-                role_user=role_user,
+                user_role=user_role,
                 exp=exp,
             )
         )
@@ -297,18 +299,18 @@ class JWTFactory:
 
     @classmethod
     def _save(
-        cls, user: User, payload: JWTPayload, token: JSONWebToken
+        cls, user: BaseUser, payload: JWTPayload, token: JSONWebToken
     ) -> OutstandingToken:
         """
         This method saves the token in the database.
 
         #### Parameters:
-        - user: An instance of the User model.
+        - user: An instance of the BaseUser model.
         - payload: The payload of the token.
         - token: A JSONWebToken.
         """
 
-        return cls.jwt_model.objects.create(
+        return cls._model.objects.create(
             user=user,
             jti=payload["jti"],
             token=token,
@@ -322,20 +324,20 @@ class JWTFactory:
         Invalidates a JSON Web Token by adding it to the blacklist.
         """
 
-        cls.blacklist_model.objects.create(token=token)
+        cls._blacklist_model.objects.create(token=token)
 
     @classmethod
-    def _get_user(cls, save: bool, role_user: Optional[str]) -> User:
+    def _get_user(cls, save: bool, user_role: Optional[str]) -> BaseUser:
         """
-        This method returns an instance of the User model that will be used to create
+        This method returns an instance of the BaseUser model that will be used to create
         a JSON Web Token.
         """
 
         if not save:
-            return User()
+            return BaseUser()
 
         return UserFactory.user(
-            role_user=role_user,
+            user_role=user_role,
             active=True,
             add_perm=True,
             save=True,
@@ -346,18 +348,18 @@ class JWTFactory:
         cls,
         exp: bool,
         save: bool,
-        user: User = None,
+        user: BaseUser = None,
         add_blacklist: bool = False,
-        role_user: str = UserRoles.SEARCHER.value,
+        user_role: str = UserRoles.SEARCHER.value,
     ) -> Dict[str, Any]:
         """
         Creates an access token.
 
         #### Parameters:
         - exp: If the token should be expired.
-        - role_user: The role of the user.
+        - user_role: The role of the user.
         - save: If the token should be saved in the database.
-        - user: An instance of the User model.
+        - user: An instance of the BaseUser model.
         - add_blacklist: If the token should be added to the blacklist.
         """
 
@@ -369,9 +371,9 @@ class JWTFactory:
 
         return cls._create(
             user=(
-                user if user else cls._get_user(role_user=role_user, save=save)
+                user if user else cls._get_user(user_role=user_role, save=save)
             ),
-            role_user=role_user,
+            user_role=user_role,
             save=save,
             token_type="access",
             add_blacklist=add_blacklist,
@@ -383,18 +385,18 @@ class JWTFactory:
         cls,
         exp: bool,
         save: bool,
-        user: User = None,
+        user: BaseUser = None,
         add_blacklist: bool = False,
-        role_user: str = UserRoles.SEARCHER.value,
+        user_role: str = UserRoles.SEARCHER.value,
     ) -> Dict[str, Any]:
         """
         Creates a refresh token.
 
         #### Parameters:
         - exp: If the token should be expired.
-        - role_user: The role of the user.
+        - user_role: The role of the user.
         - save: If the token should be saved in the database.
-        - user: An instance of the User model.
+        - user: An instance of the BaseUser model.
         - add_blacklist: If the token should be added to the blacklist.
         """
 
@@ -406,9 +408,9 @@ class JWTFactory:
 
         return cls._create(
             user=(
-                user if user else cls._get_user(role_user=role_user, save=save)
+                user if user else cls._get_user(user_role=user_role, save=save)
             ),
-            role_user=role_user,
+            user_role=user_role,
             token_type="refresh",
             exp=exp_token,
             save=save,
@@ -421,9 +423,9 @@ class JWTFactory:
         save: bool,
         exp_access: bool,
         exp_refresh: bool,
-        user: User = None,
+        user: BaseUser = None,
         add_blacklist: bool = False,
-        role_user: str = UserRoles.SEARCHER.value,
+        user_role: str = UserRoles.SEARCHER.value,
     ) -> Dict[str, Any]:
         """
         Creates an access and a refresh token.
@@ -433,7 +435,7 @@ class JWTFactory:
         - exp_refresh: If the refresh token should be expired.
         - role: The role of the user.
         - save: If the token should be saved in the database.
-        - user: An instance of the User model.
+        - user: An instance of the BaseUser model.
         - add_blacklist: If the token should be added to the blacklist.
         """
 
@@ -448,34 +450,34 @@ class JWTFactory:
             else aware_utcnow() + REFRESH_TOKEN_LIFETIME
         )
         user_obj = (
-            user if user else cls._get_user(role_user=role_user, save=save)
+            user if user else cls._get_user(user_role=user_role, save=save)
         )
 
         # Create the payloads
         refresh_payload = cls._get_payload(
             user_uuid=user_obj.uuid.__str__(),
             token_type="refresh",
-            role_user=role_user,
+            user_role=user_role,
             exp=exp_refresh,
         )
         access_payload = cls._get_payload(
             user_uuid=user_obj.uuid.__str__(),
             token_type="access",
-            role_user=role_user,
+            user_role=user_role,
             exp=exp_access,
         )
         access_payload["iat"] = refresh_payload["iat"]
 
         access_data = cls._create(
             payload=access_payload,
-            role_user=role_user,
+            user_role=user_role,
             user=user_obj,
             save=save,
             add_blacklist=add_blacklist,
         )
         refresh_data = cls._create(
             payload=refresh_payload,
-            role_user=role_user,
+            user_role=user_role,
             user=user_obj,
             save=save,
             add_blacklist=add_blacklist,

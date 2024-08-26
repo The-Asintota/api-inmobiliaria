@@ -1,6 +1,6 @@
 from apps.users.infrastructure.db import JWTRepository, UserRepository
 from apps.users.applications import JWTUpdate
-from apps.users.models import User
+from apps.users.models import BaseUser
 from apps.users.domain.constants import UserRoles
 from apps.api_exceptions import (
     DatabaseConnectionAPIError,
@@ -39,11 +39,11 @@ class TestUpdateTokensApplication:
     jwt_factory = JWTFactory
 
     @pytest.mark.parametrize(
-        argnames="role_user",
+        argnames="user_role",
         argvalues=[UserRoles.SEARCHER.value],
         ids=["searcher_user"],
     )
-    def test_updated_tokens(self, role_user: str) -> None:
+    def test_updated_tokens(self, user_role: str) -> None:
         """
         This test case is responsible for testing the successful update of the tokens
         of a user.
@@ -51,10 +51,10 @@ class TestUpdateTokensApplication:
 
         # Creating the JWTs to be used in the test
         user, _, _ = self.user_factory.user(
-            role_user=role_user, active=True, save=True, add_perm=False
+            user_role=user_role, active=True, save=True, add_perm=False
         )
         refresh_data = self.jwt_factory.refresh(
-            role_user=user.content_type.model,
+            user_role=user.content_type.model,
             user=user,
             exp=False,
             save=True,
@@ -118,8 +118,8 @@ class TestUpdateTokensApplication:
         )
         assert refresh_obj.jti == response_refresh_payload["jti"]
         assert refresh_obj.token == tokens["refresh_token"]
-        assert response_access_payload["role_user"] == role_user
-        assert response_refresh_payload["role_user"] == role_user
+        assert response_access_payload["user_role"] == user_role
+        assert response_refresh_payload["user_role"] == user_role
 
     def test_if_token_not_found(self) -> None:
         """
@@ -132,7 +132,7 @@ class TestUpdateTokensApplication:
             active=True, save=True, add_perm=False
         )
         refresh_data = self.jwt_factory.refresh(
-            role_user=user.content_type.model,
+            user_role=user.content_type.model,
             user=user,
             exp=False,
             save=False,
@@ -160,13 +160,13 @@ class TestUpdateTokensApplication:
         """
 
         # Mocking the methods
-        get_user_data: Mock = user_repository.get_user_data
-        get_user_data.return_value = empty_queryset(model=User)
+        get_base_data: Mock = user_repository.get_base_data
+        get_base_data.return_value = empty_queryset(model=BaseUser)
 
         # Creating the JWTs to be used in the test
         refresh_data = self.jwt_factory.refresh(
-            role_user="AnyUser",
-            user=User(),
+            user_role="AnyUser",
+            user=BaseUser(),
             exp=False,
             save=False,
         )
@@ -193,13 +193,13 @@ class TestUpdateTokensApplication:
         """
 
         # Mocking the methods
-        get_user_data: Mock = user_repository.get_user_data
-        get_user_data.side_effect = DatabaseConnectionAPIError
+        get_base_data: Mock = user_repository.get_base_data
+        get_base_data.side_effect = DatabaseConnectionAPIError
 
         # Creating the JWTs to be used in the test
         refresh_data = self.jwt_factory.refresh(
-            role_user="AnyUser",
-            user=User(),
+            user_role="AnyUser",
+            user=BaseUser(),
             exp=False,
             save=False,
         )

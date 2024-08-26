@@ -1,4 +1,4 @@
-from apps.users.models import User
+from apps.users.models import BaseUser
 from apps.utils.messages import JWTErrorMessages
 from apps.api_exceptions import (
     ResourceNotFoundAPIError,
@@ -55,7 +55,7 @@ class TestLogoutAPIView:
             active=True, save=True, add_perm=False
         )
         refresh_token = self.jwt_factory.refresh(
-            role_user=user.content_type.model,
+            user_role=user.content_type.model,
             user=user,
             exp=False,
             save=True,
@@ -88,7 +88,7 @@ class TestLogoutAPIView:
             active=True, save=True, add_perm=False
         )
         jwt_data = self.jwt_factory.access_and_refresh(
-            role_user=user.content_type.model,
+            user_role=user.content_type.model,
             user=user,
             exp_access=False,
             exp_refresh=False,
@@ -121,7 +121,7 @@ class TestLogoutAPIView:
             active=True, save=True, add_perm=False
         )
         access_token = self.jwt_factory.access(
-            role_user=user.content_type.model,
+            user_role=user.content_type.model,
             user=user,
             exp=False,
             save=True,
@@ -199,7 +199,7 @@ class TestLogoutAPIView:
             active=True, save=True, add_perm=False
         )
         access_token = self.jwt_factory.access(
-            role_user=user.content_type.model,
+            user_role=user.content_type.model,
             user=user,
             exp=False,
             save=True,
@@ -256,14 +256,14 @@ class TestLogoutAPIView:
             active=True, save=True, add_perm=False
         )
         access_token = self.jwt_factory.access(
-            role_user=user.content_type.model,
+            user_role=user.content_type.model,
             add_blacklist=access_blacklist,
             user=user,
             exp=False,
             save=True,
         ).get("token")
         refresh_token = self.jwt_factory.refresh(
-            role_user=user.content_type.model,
+            user_role=user.content_type.model,
             add_blacklist=refresh_blacklist,
             user=user,
             exp=False,
@@ -297,7 +297,7 @@ class TestLogoutAPIView:
             active=True, save=True, add_perm=False
         )
         access_token = self.jwt_factory.access(
-            role_user=user.content_type.model,
+            user_role=user.content_type.model,
             user=user,
             exp=False,
             save=True,

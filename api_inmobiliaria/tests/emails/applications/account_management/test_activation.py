@@ -3,7 +3,7 @@ from apps.emails.applications.account_management import AccountActivation
 from apps.emails.domain.constants import TOKEN_EXPIRATION
 from apps.emails.models import Token
 from apps.users.infrastructure.db import UserRepository
-from apps.users.models import User
+from apps.users.models import BaseUser
 from apps.utils.generators import TokenGenerator
 from apps.api_exceptions import (
     AccountActivationAPIError,
@@ -38,7 +38,7 @@ class TestApplicationSendMail:
         """
 
         # Creating the user data to be used in the test
-        user, _, _ = self.user_factory.searcher_user(
+        base_user, _, _ = self.user_factory.searcher_user(
             active=False, save=True, add_perm=False
         )
 
@@ -46,7 +46,7 @@ class TestApplicationSendMail:
         app = self.application_class(
             token_class=TokenGenerator(), token_repository=TokenRepository
         )
-        app.send_email(user=user, request=RequestFactory().post("/"))
+        app.send_email(base_user=base_user, request=RequestFactory().post("/"))
 
         # Asserting that the message is sent and the token is created
         assert len(mail.outbox) == 1
@@ -62,7 +62,7 @@ class TestApplicationSendMail:
         with pytest.raises(ResourceNotFoundAPIError):
             self.application_class(
                 token_class=TokenGenerator(), token_repository=TokenRepository
-            ).send_email(user=None, request=RequestFactory().post("/"))
+            ).send_email(base_user=None, request=RequestFactory().post("/"))
 
         # Asserting that the message is not sent and the token is not created
         assert len(mail.outbox) == 0
@@ -79,7 +79,7 @@ class TestApplicationSendMail:
             self.application_class(
                 token_class=TokenGenerator(), token_repository=TokenRepository
             ).send_email(
-                user=User(
+                base_user=BaseUser(
                     uuid=uuid4(),
                     email="user1@email.com",
                     is_active=True,
@@ -106,7 +106,7 @@ class TestApplicationSendMail:
             self.application_class(
                 token_class=TokenGenerator(), token_repository=token_repository
             ).send_email(
-                user=User(
+                base_user=BaseUser(
                     uuid=uuid4(),
                     email="user1@email.com",
                     is_active=False,
@@ -136,10 +136,10 @@ class TestApplicationCheckToken:
         """
 
         # Creating the user and token to be used in the test
-        user, _, _ = self.user_factory.searcher_user(
+        base_user, _, _ = self.user_factory.searcher_user(
             active=False, save=True, add_perm=False
         )
-        token = TokenGenerator().make_token(user=user)
+        token = TokenGenerator().make_token(base_user=base_user)
         Token.objects.create(token=token)
 
         # Instantiating the application and calling the method
@@ -150,12 +150,12 @@ class TestApplicationCheckToken:
             path_send_mail="send_activation_mail",
         ).check_token(
             token=token,
-            user_uuid=user.uuid,
+            user_uuid=base_user.uuid,
             request=RequestFactory().post("/"),
         )
 
         # Asserting that the user is active
-        user = User.objects.get(uuid=user.uuid)
+        user = BaseUser.objects.get(uuid=base_user.uuid)
 
         assert user.is_active
 
@@ -165,11 +165,13 @@ class TestApplicationCheckToken:
         use case when the user is not found.
         """
 
-        user = User(uuid=uuid4(), email="user@gmail.com", is_active=False)
+        base_user = BaseUser(
+            uuid=uuid4(), email="user@gmail.com", is_active=False
+        )
 
         # Preparing the mocks
-        get_user_data: Mock = user_repository.get_user_data
-        get_user_data.return_value = empty_queryset(model=User)
+        get_base_data: Mock = user_repository.get_base_data
+        get_base_data.return_value = empty_queryset(model=BaseUser)
 
         # Instantiating the application and calling the method
         with pytest.raises(ResourceNotFoundViewError):
@@ -180,7 +182,7 @@ class TestApplicationCheckToken:
                 path_send_mail="send_activation_mail",
             ).check_token(
                 token="token1234",
-                user_uuid=user.uuid,
+                user_uuid=base_user.uuid,
                 request=RequestFactory().post("/"),
             )
 
@@ -191,10 +193,10 @@ class TestApplicationCheckToken:
         """
 
         # Creating the user and token to be used in the test
-        user, _, _ = self.user_factory.searcher_user(
+        base_user, _, _ = self.user_factory.searcher_user(
             active=False, save=True, add_perm=False
         )
-        token = TokenGenerator().make_token(user=user)
+        token = TokenGenerator().make_token(base_user=base_user)
         token_obj = Token.objects.create(token=token)
 
         # Changing the token expiration date
@@ -210,12 +212,12 @@ class TestApplicationCheckToken:
                 path_send_mail="send_activation_mail",
             ).check_token(
                 token=token,
-                user_uuid=user.uuid,
+                user_uuid=base_user.uuid,
                 request=RequestFactory().post("/"),
             )
 
         # Asserting that the user is not active
-        user = User.objects.get(uuid=user.uuid)
+        user = BaseUser.objects.get(uuid=base_user.uuid)
 
         assert not user.is_active
 
@@ -226,13 +228,13 @@ class TestApplicationCheckToken:
         """
 
         # Creating the user and token to be used in the test
-        user, _, _ = self.user_factory.searcher_user(
+        base_user, _, _ = self.user_factory.searcher_user(
             active=False, save=True, add_perm=False
         )
         other_user, _, _ = self.user_factory.searcher_user(
             active=False, save=True, add_perm=False
         )
-        token = TokenGenerator().make_token(user=other_user)
+        token = TokenGenerator().make_token(base_user=other_user)
         Token.objects.create(token=token)
 
         # Instantiating the application and calling the method
@@ -244,12 +246,12 @@ class TestApplicationCheckToken:
                 path_send_mail="send_activation_mail",
             ).check_token(
                 token=token,
-                user_uuid=user.uuid,
+                user_uuid=base_user.uuid,
                 request=RequestFactory().post("/"),
             )
 
         # Asserting that the user is not active
-        user = User.objects.get(uuid=user.uuid)
+        user = BaseUser.objects.get(uuid=base_user.uuid)
 
         assert not user.is_active
 
@@ -262,15 +264,15 @@ class TestApplicationCheckToken:
         """
 
         # Creating the user to be used in the test
-        user, _, _ = self.user_factory.searcher_user(
+        base_user, _, _ = self.user_factory.searcher_user(
             active=False, save=True, add_perm=False
         )
 
         # Mocking the methods
         get: Mock = token_repository.get
         get.side_effect = DatabaseConnectionAPIError
-        get_user_data: Mock = user_repository.get_user_data
-        get_user_data.side_effect = DatabaseConnectionAPIError
+        get_base_data: Mock = user_repository.get_base_data
+        get_base_data.side_effect = DatabaseConnectionAPIError
 
         for ur, tr in [
             (user_repository, TokenRepository),
@@ -285,11 +287,11 @@ class TestApplicationCheckToken:
                     path_send_mail="send_activation_mail",
                 ).check_token(
                     token="token123",
-                    user_uuid=user.uuid,
+                    user_uuid=base_user.uuid,
                     request=RequestFactory().post("/"),
                 )
 
             # Asserting that the user is not active
-            user = User.objects.get(uuid=user.uuid)
+            user = BaseUser.objects.get(uuid=base_user.uuid)
 
             assert not user.is_active

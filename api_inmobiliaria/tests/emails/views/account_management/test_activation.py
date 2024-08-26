@@ -48,15 +48,15 @@ class TestAccountActivationView:
         """
 
         # Creating the user and token to be used in the test
-        user, _, _ = self.user_factory.searcher_user(
+        base_user, _, _ = self.user_factory.searcher_user(
             active=False, add_perm=False, save=True
         )
-        token = self.token_factory(user=user)
+        token = self.token_factory(base_user=base_user)
         _ = token.save()
 
         # Simulating the request
         response = self.client.get(
-            path=self._get_path(user_uuid=user.uuid, token=token)
+            path=self._get_path(user_uuid=base_user.uuid, token=token)
         )
 
         # Asserting that response data is correct
@@ -150,13 +150,13 @@ class TestAccountActivationView:
         """
 
         # Creating the user to be used in the test
-        user, _, _ = self.user_factory.searcher_user(
+        base_user, _, _ = self.user_factory.searcher_user(
             active=False, add_perm=False, save=True
         )
 
         # Simulating the request
         response = self.client.get(
-            path=self._get_path(user_uuid=user.uuid, token="123")
+            path=self._get_path(user_uuid=base_user.uuid, token="123")
         )
 
         # Asserting that response data is correct
@@ -189,10 +189,10 @@ class TestAccountActivationView:
         """
 
         # Creating the user and token to be used in the test
-        user, _, _ = self.user_factory.searcher_user(
+        base_user, _, _ = self.user_factory.searcher_user(
             active=False, add_perm=False, save=True
         )
-        token = self.token_factory(user=user)
+        token = self.token_factory(base_user=base_user)
         token_obj = token.save()
 
         # Changing the token expiration date
@@ -201,7 +201,7 @@ class TestAccountActivationView:
 
         # Simulating the request
         response = self.client.get(
-            path=self._get_path(user_uuid=user.uuid, token=token)
+            path=self._get_path(user_uuid=base_user.uuid, token=token)
         )
 
         # Asserting that response data is correct
@@ -227,18 +227,18 @@ class TestAccountActivationView:
         """
 
         # Creating the user and token to be used in the test
-        user, _, _ = self.user_factory.searcher_user(
+        base_user, _, _ = self.user_factory.searcher_user(
             active=False, add_perm=False, save=True
         )
-        token = self.token_factory(user=user)
+        token = self.token_factory(base_user=base_user)
         _ = token.save()
 
-        user.is_active = True
-        user.save()
+        base_user.is_active = True
+        base_user.save()
 
         # Simulating the request
         response = self.client.get(
-            path=self._get_path(user_uuid=user.uuid, token=token)
+            path=self._get_path(user_uuid=base_user.uuid, token=token)
         )
 
         # Asserting that response data is correct
@@ -277,18 +277,18 @@ class TestAccountActivationView:
         """
 
         # Creating the user and token to be used in the test
-        user, _, _ = self.user_factory.searcher_user(
+        base_user, _, _ = self.user_factory.searcher_user(
             active=False, add_perm=False, save=True
         )
-        token = self.token_factory(user=user)
+        token = self.token_factory(base_user=base_user)
 
         # Mocking the methods
-        get_user_data: Mock = user_repository_mock.get_user_data
-        get_user_data.side_effect = DatabaseConnectionAPIError
+        get_base_data: Mock = user_repository_mock.get_base_data
+        get_base_data.side_effect = DatabaseConnectionAPIError
 
         # Simulating the request
         response = self.client.get(
-            path=self._get_path(user_uuid=user.uuid, token=token)
+            path=self._get_path(user_uuid=base_user.uuid, token=token)
         )
 
         # Asserting that response data is correct

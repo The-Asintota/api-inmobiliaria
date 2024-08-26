@@ -32,12 +32,12 @@ class TestLoginApplication:
     user_factory = UserFactory
 
     @pytest.mark.parametrize(
-        argnames="role_user",
+        argnames="user_role",
         argvalues=[UserRoles.SEARCHER.value],
         ids=["searcher_user"],
     )
     def test_authenticated_user(
-        self, role_user: str, setup_database: Callable
+        self, user_role: str, setup_database: Callable
     ) -> None:
         """
         This test is responsible for validating the expected behavior of the use case
@@ -46,7 +46,7 @@ class TestLoginApplication:
 
         # Creating the user data to be used in the test
         _, _, data = self.user_factory.user(
-            role_user=role_user, active=True, save=True, add_perm=True
+            user_role=user_role, active=True, save=True, add_perm=True
         )
 
         response_data = self.application_class.authenticate_user(
@@ -97,9 +97,9 @@ class TestLoginApplication:
         assert refresh_obj.user.uuid.__str__() == refresh_payload["user_uuid"]
         assert refresh_obj.jti == refresh_payload["jti"]
         assert refresh_obj.token == response_data["refresh_token"]
-        assert access_payload["role_user"] == role_user
-        assert refresh_payload["role_user"] == role_user
-        assert response_data["role_user"] == role_user
+        assert access_payload["user_role"] == user_role
+        assert refresh_payload["user_role"] == user_role
+        assert response_data["user_role"] == user_role
 
     def test_if_credentials_invalid(self) -> None:
         """
@@ -121,12 +121,12 @@ class TestLoginApplication:
         assert BlacklistedToken.objects.count() == 0
 
     @pytest.mark.parametrize(
-        argnames="role_user",
+        argnames="user_role",
         argvalues=[UserRoles.SEARCHER.value],
         ids=["searcher_user"],
     )
     def test_if_inactive_user_account(
-        self, role_user: str, setup_database: Callable
+        self, user_role: str, setup_database: Callable
     ) -> None:
         """
         This test is responsible for validating the expected behavior of the use case
@@ -135,7 +135,7 @@ class TestLoginApplication:
 
         # Creating the user data to be used in the test
         _, _, data = self.user_factory.user(
-            role_user=role_user, active=False, save=True, add_perm=True
+            user_role=user_role, active=False, save=True, add_perm=True
         )
 
         # Instantiating the application and calling the method
@@ -152,11 +152,11 @@ class TestLoginApplication:
         assert BlacklistedToken.objects.count() == 0
 
     @pytest.mark.parametrize(
-        argnames="role_user",
+        argnames="user_role",
         argvalues=[UserRoles.SEARCHER.value],
         ids=["searcher_user"],
     )
-    def test_if_user_has_not_permission(self, role_user: str) -> None:
+    def test_if_user_has_not_permission(self, user_role: str) -> None:
         """
         This test is responsible for validating the expected behavior of the use case
         when the user does not have the necessary permissions to perform the action.
@@ -164,7 +164,7 @@ class TestLoginApplication:
 
         # Creating the user data to be used in the test
         _, _, data = self.user_factory.user(
-            role_user=role_user, active=True, save=True, add_perm=False
+            user_role=user_role, active=True, save=True, add_perm=False
         )
 
         # Instantiating the application and calling the method
@@ -180,7 +180,7 @@ class TestLoginApplication:
         assert OutstandingToken.objects.count() == 0
         assert BlacklistedToken.objects.count() == 0
 
-    @patch("apps.backend.UserRepository")
+    @patch("apps.backend.EmailBackend._user_repository")
     def test_if_conection_db_failed(self, user_repository_mock: Mock) -> None:
         """
         Test that validates the expected behavior of the use case when the connection
@@ -188,8 +188,8 @@ class TestLoginApplication:
         """
 
         # Mocking the methods
-        get_user_data: Mock = user_repository_mock.get_user_data
-        get_user_data.side_effect = DatabaseConnectionAPIError
+        get_base_data: Mock = user_repository_mock.get_base_data
+        get_base_data.side_effect = DatabaseConnectionAPIError
 
         # Instantiating the application and calling the method
         with pytest.raises(DatabaseConnectionAPIError):

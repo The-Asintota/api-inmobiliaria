@@ -55,12 +55,12 @@ class TestGetSearcherUserAPIView:
         """
 
         # Creating the JWTs to be used in the test
-        base_user, role_user, _ = self.user_factory.searcher_user(
+        base_user, user_role, _ = self.user_factory.searcher_user(
             active=True, save=True, add_perm=True
         )
 
         access_token = self.jwt_factory.access(
-            role_user=base_user.content_type.model,
+            user_role=base_user.content_type.model,
             user=base_user,
             exp=False,
             save=True,
@@ -80,12 +80,12 @@ class TestGetSearcherUserAPIView:
         role_data = response.data["role_data"]
 
         assert base_data["email"] == base_user.email
-        assert role_data["name"] == role_user.name
-        assert role_data["last_name"] == role_user.last_name
-        assert role_data["cc"] == role_user.cc
-        assert role_data["address"] == role_user.address
-        assert role_data["phone_number"] == role_user.phone_number
-        assert role_data["is_phone_verified"] == role_user.is_phone_verified
+        assert role_data["name"] == user_role.name
+        assert role_data["last_name"] == user_role.last_name
+        assert role_data["cc"] == user_role.cc
+        assert role_data["address"] == user_role.address
+        assert role_data["phone_number"] == user_role.phone_number
+        assert role_data["is_phone_verified"] == user_role.is_phone_verified
 
     def test_if_user_has_not_permission(self, setup_database: Callable) -> None:
         """
@@ -99,7 +99,7 @@ class TestGetSearcherUserAPIView:
         )
 
         access_token = self.jwt_factory.access(
-            role_user=user.content_type.model,
+            user_role=user.content_type.model,
             user=user,
             exp=False,
             save=True,
@@ -178,7 +178,7 @@ class TestGetSearcherUserAPIView:
             active=True, save=True, add_perm=False
         )
         access_token = self.jwt_factory.access(
-            role_user=user.content_type.model,
+            user_role=user.content_type.model,
             add_blacklist=True,
             user=user,
             exp=False,
@@ -232,7 +232,7 @@ class TestGetSearcherUserAPIView:
         assert response.data["code"] == response_code_expected
         assert response.data["detail"] == response_data_expected
 
-    @patch("authentication.jwt.UserRepository")
+    @patch("authentication.jwt.JWTAuthentication._user_repository")
     def test_if_conection_db_failed(self, user_repository_mock: Mock) -> None:
         """
         This test is responsible for validating the expected behavior of the
@@ -240,8 +240,8 @@ class TestGetSearcherUserAPIView:
         """
 
         # Mocking the methods
-        get_user_data: Mock = user_repository_mock.get_user_data
-        get_user_data.side_effect = DatabaseConnectionAPIError
+        get_base_data: Mock = user_repository_mock.get_base_data
+        get_base_data.side_effect = DatabaseConnectionAPIError
 
         # Creating the user data to be used in the test
         access_token = self.jwt_factory.access(

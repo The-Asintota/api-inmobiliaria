@@ -41,7 +41,7 @@ class TestLogoutApplication:
             active=True, save=True, add_perm=False
         )
         jwt_data = self.jwt_factory.access_and_refresh(
-            role_user=user.content_type.model,
+            user_role=user.content_type.model,
             user=user,
             exp_access=False,
             exp_refresh=False,

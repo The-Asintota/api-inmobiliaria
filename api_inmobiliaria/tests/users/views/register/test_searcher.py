@@ -9,6 +9,7 @@ from tests.utils import fake
 from rest_framework import status
 from django.test import Client
 from django.urls import reverse
+from django.db import OperationalError
 from unittest.mock import Mock, patch
 from typing import Callable, Dict
 import pytest
@@ -222,16 +223,16 @@ class TestSearcherRegisterUserAPIView:
         for field, message in error_messages.items():
             assert errors_formatted[field] == message
 
-    @patch("apps.users.infrastructure.serializers.base.UserRepository")
-    def test_if_conection_db_failed(self, user_repository_mock: Mock) -> None:
+    @patch("apps.users.applications.register.Group")
+    def test_if_conection_db_failed(self, model_group_mock: Mock) -> None:
         """
         This test is responsible for validating the expected behavior of the
         view when a DatabaseConnectionAPIError exception is raised.
         """
 
         # Mocking the methods
-        get_user_data: Mock = user_repository_mock.get_user_data
-        get_user_data.side_effect = DatabaseConnectionAPIError
+        get: Mock = model_group_mock.objects.get
+        get.side_effect = OperationalError
 
         # Creating the user data to be used in the test
         _, _, data = self.user_factory.searcher_user(
