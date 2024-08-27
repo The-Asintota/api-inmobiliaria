@@ -37,12 +37,12 @@ class TestLogoutApplication:
         """
 
         # Creating the JWTs to be used in the test
-        user, _, _ = self.user_factory.searcher_user(
+        base_user, _, _ = self.user_factory.searcher_user(
             active=True, save=True, add_perm=False
         )
         jwt_data = self.jwt_factory.access_and_refresh(
-            user_role=user.content_type.model,
-            user=user,
+            user_role=base_user.content_type.model,
+            user=base_user,
             exp_access=False,
             exp_refresh=False,
             save=True,

@@ -56,12 +56,12 @@ class TestUpdateTokensAPIView:
         """
 
         # Creating the JWTs to be used in the test
-        user, _, _ = self.user_factory.user(
+        base_user, _, _ = self.user_factory.user(
             user_role=user_role, active=True, save=True, add_perm=False
         )
         jwt_data = self.jwt_factory.access_and_refresh(
-            user_role=user.content_type.model,
-            user=user,
+            user_role=base_user.content_type.model,
+            user=base_user,
             exp_access=True,
             exp_refresh=False,
             save=True,
@@ -235,19 +235,19 @@ class TestUpdateTokensAPIView:
         """
 
         # Creating the JWTs to be used in the test
-        user, _, _ = self.user_factory.searcher_user(
+        base_user, _, _ = self.user_factory.searcher_user(
             active=True, save=True, add_perm=False
         )
         access_token = self.jwt_factory.access(
-            user_role=user.content_type.model,
-            user=user,
+            user_role=base_user.content_type.model,
+            user=base_user,
             exp=True,
             save=True,
             add_blacklist=access_blacklist,
         ).get("token")
         refresh_token = self.jwt_factory.refresh(
-            user_role=user.content_type.model,
-            user=user,
+            user_role=base_user.content_type.model,
+            user=base_user,
             exp=False,
             save=True,
             add_blacklist=refresh_blacklist,
@@ -305,12 +305,12 @@ class TestUpdateTokensAPIView:
         """
 
         # Creating the JWTs to be used in the test
-        user, _, _ = self.user_factory.searcher_user(
+        base_user, _, _ = self.user_factory.searcher_user(
             active=True, save=True, add_perm=False
         )
         jwt_data = self.jwt_factory.access_and_refresh(
-            user_role=user.content_type.model,
-            user=user,
+            user_role=base_user.content_type.model,
+            user=base_user,
             exp_access=True,
             exp_refresh=False,
             save=False,

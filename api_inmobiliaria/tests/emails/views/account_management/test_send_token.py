@@ -40,13 +40,13 @@ class TestSendAccountActivationTokenAPIView:
         """
 
         # Creating the user to be used in the test
-        user, _, _ = self.user_factory.searcher_user(
+        base_user, _, _ = self.user_factory.searcher_user(
             active=False, add_perm=False, save=True
         )
 
         # Simulating the request
         response = self.client.get(
-            path=self._get_path(user_uuid=user.uuid),
+            path=self._get_path(user_uuid=base_user.uuid),
             content_type="application/json",
         )
 
@@ -96,13 +96,13 @@ class TestSendAccountActivationTokenAPIView:
         """
 
         # Creating the user to be used in the test
-        user, _, _ = self.user_factory.searcher_user(
+        base_user, _, _ = self.user_factory.searcher_user(
             active=True, add_perm=False, save=True
         )
 
         # Simulating the request
         response = self.client.get(
-            path=self._get_path(user_uuid=user.uuid),
+            path=self._get_path(user_uuid=base_user.uuid),
             content_type="application/json",
         )
 
@@ -128,7 +128,7 @@ class TestSendAccountActivationTokenAPIView:
         """
 
         # Creating the user to be used in the test
-        user, _, _ = self.user_factory.searcher_user(
+        base_user, _, _ = self.user_factory.searcher_user(
             active=False, add_perm=False, save=True
         )
 
@@ -138,7 +138,7 @@ class TestSendAccountActivationTokenAPIView:
 
         # Simulating the request
         response = self.client.get(
-            path=self._get_path(user_uuid=user.uuid),
+            path=self._get_path(user_uuid=base_user.uuid),
             content_type="application/json",
         )
 

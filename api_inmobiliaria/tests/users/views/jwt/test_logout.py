@@ -1,17 +1,13 @@
-from apps.users.models import BaseUser
 from apps.utils.messages import JWTErrorMessages
 from apps.api_exceptions import (
-    ResourceNotFoundAPIError,
     NotAuthenticatedAPIError,
     JWTAPIError,
 )
 from tests.factory import JWTFactory, UserFactory
-from tests.utils import empty_queryset
 from rest_framework.fields import CharField
 from rest_framework import status
 from django.test import Client
 from django.urls import reverse
-from unittest.mock import Mock, patch
 from typing import Dict
 import pytest
 
@@ -50,21 +46,10 @@ class TestLogoutAPIView:
         when the access token is not provided.
         """
 
-        # Creating the JWTs to be used in the test
-        user, _, _ = self.user_factory.searcher_user(
-            active=True, save=True, add_perm=False
-        )
-        refresh_token = self.jwt_factory.refresh(
-            user_role=user.content_type.model,
-            user=user,
-            exp=False,
-            save=True,
-        ).get("token")
-
         # Simulating the request
         response = self.client.post(
             path=self.path,
-            data={"refresh_token": refresh_token},
+            data={},
             content_type="application/json",
         )
 
@@ -84,23 +69,23 @@ class TestLogoutAPIView:
         """
 
         # Creating the JWTs to be used in the test
-        user, _, _ = self.user_factory.searcher_user(
+        base_user, _, _ = self.user_factory.searcher_user(
             active=True, save=True, add_perm=False
         )
-        jwt_data = self.jwt_factory.access_and_refresh(
-            user_role=user.content_type.model,
-            user=user,
+        tokens = self.jwt_factory.access_and_refresh(
+            user_role=base_user.content_type.model,
+            user=base_user,
             exp_access=False,
             exp_refresh=False,
             save=True,
-        )
+        ).get("tokens")
 
         # Simulating the request
         response = self.client.post(
             path=self.path,
-            data={"refresh_token": jwt_data["tokens"]["refresh_token"]},
+            data={"refresh_token": tokens["refresh_token"]},
             content_type="application/json",
-            HTTP_AUTHORIZATION=f'Bearer {jwt_data["tokens"]["access_token"]}',
+            HTTP_AUTHORIZATION=f'Bearer {tokens["access_token"]}',
         )
 
         # Asserting that response data is correct
@@ -117,12 +102,12 @@ class TestLogoutAPIView:
         }
 
         # Creating the JWTs to be used in the test
-        user, _, _ = self.user_factory.searcher_user(
+        base_user, _, _ = self.user_factory.searcher_user(
             active=True, save=True, add_perm=False
         )
         access_token = self.jwt_factory.access(
-            user_role=user.content_type.model,
-            user=user,
+            user_role=base_user.content_type.model,
+            user=base_user,
             exp=False,
             save=True,
         ).get("token")
@@ -195,12 +180,12 @@ class TestLogoutAPIView:
         """
 
         # Creating the JWTs to be used in the test
-        user, _, _ = self.user_factory.searcher_user(
+        base_user, _, _ = self.user_factory.searcher_user(
             active=True, save=True, add_perm=False
         )
         access_token = self.jwt_factory.access(
-            user_role=user.content_type.model,
-            user=user,
+            user_role=base_user.content_type.model,
+            user=base_user,
             exp=False,
             save=True,
         ).get("token")
@@ -252,20 +237,20 @@ class TestLogoutAPIView:
         """
 
         # Creating the JWTs to be used in the test
-        user, _, _ = self.user_factory.searcher_user(
+        base_user, _, _ = self.user_factory.searcher_user(
             active=True, save=True, add_perm=False
         )
         access_token = self.jwt_factory.access(
-            user_role=user.content_type.model,
+            user_role=base_user.content_type.model,
             add_blacklist=access_blacklist,
-            user=user,
+            user=base_user,
             exp=False,
             save=True,
         ).get("token")
         refresh_token = self.jwt_factory.refresh(
-            user_role=user.content_type.model,
+            user_role=base_user.content_type.model,
             add_blacklist=refresh_blacklist,
-            user=user,
+            user=base_user,
             exp=False,
             save=True,
         ).get("token")
@@ -293,12 +278,12 @@ class TestLogoutAPIView:
         """
 
         # Creating the JWTs to be used in the test
-        user, _, _ = self.user_factory.searcher_user(
+        base_user, _, _ = self.user_factory.searcher_user(
             active=True, save=True, add_perm=False
         )
         access_token = self.jwt_factory.access(
-            user_role=user.content_type.model,
-            user=user,
+            user_role=base_user.content_type.model,
+            user=base_user,
             exp=False,
             save=True,
         ).get("token")

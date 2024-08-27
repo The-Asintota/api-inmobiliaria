@@ -50,12 +50,12 @@ class TestUpdateTokensApplication:
         """
 
         # Creating the JWTs to be used in the test
-        user, _, _ = self.user_factory.user(
+        base_user, _, _ = self.user_factory.user(
             user_role=user_role, active=True, save=True, add_perm=False
         )
         refresh_data = self.jwt_factory.refresh(
-            user_role=user.content_type.model,
-            user=user,
+            user_role=base_user.content_type.model,
+            user=base_user,
             exp=False,
             save=True,
         )
@@ -128,12 +128,12 @@ class TestUpdateTokensApplication:
         """
 
         # Creating the JWTs to be used in the test
-        user, _, _ = self.user_factory.searcher_user(
+        base_user, _, _ = self.user_factory.searcher_user(
             active=True, save=True, add_perm=False
         )
         refresh_data = self.jwt_factory.refresh(
-            user_role=user.content_type.model,
-            user=user,
+            user_role=base_user.content_type.model,
+            user=base_user,
             exp=False,
             save=False,
         )
