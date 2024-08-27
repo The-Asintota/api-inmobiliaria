@@ -312,6 +312,62 @@ PATCHearcherSchema = extend_schema(
                         },
                     },
                 ),
+                OpenApiExample(
+                    name="invalid_data",
+                    summary="Invalid data",
+                    description="These are the possible error messages for each field.",
+                    value={
+                        "code": "invalid_request_data",
+                        "detail": {
+                            "name": [
+                                ERROR_MESSAGES["blank"],
+                                ERROR_MESSAGES["null"],
+                                ERROR_MESSAGES["invalid"],
+                                ERROR_MESSAGES["max_length"].format(
+                                    max_length=SearcherProperties.NAME_MAX_LENGTH.value,
+                                ),
+                            ],
+                            "last_name": [
+                                ERROR_MESSAGES["blank"],
+                                ERROR_MESSAGES["null"],
+                                ERROR_MESSAGES["invalid"],
+                                ERROR_MESSAGES["max_length"].format(
+                                    max_length=SearcherProperties.LAST_NAME_MAX_LENGTH.value,
+                                ),
+                            ],
+                            "address": [
+                                ERROR_MESSAGES["blank"],
+                                ERROR_MESSAGES["null"],
+                                ERROR_MESSAGES["invalid"],
+                                ERROR_MESSAGES["max_length"].format(
+                                    max_length=SearcherProperties.ADDRESS_MAX_LENGTH.value,
+                                ),
+                                ERROR_MESSAGES["address_in_use"],
+                            ],
+                            "cc": [
+                                ERROR_MESSAGES["blank"],
+                                ERROR_MESSAGES["null"],
+                                ERROR_MESSAGES["invalid"],
+                                ERROR_MESSAGES["max_length"].format(
+                                    max_length=SearcherProperties.CC_MAX_LENGTH.value,
+                                ),
+                                ERROR_MESSAGES["min_length"].format(
+                                    min_length=SearcherProperties.CC_MIN_LENGTH.value,
+                                ),
+                                ERROR_MESSAGES["cc_in_use"],
+                            ],
+                            "phone_number": [
+                                ERROR_MESSAGES["blank"],
+                                ERROR_MESSAGES["null"],
+                                ERROR_MESSAGES["invalid"],
+                                ERROR_MESSAGES["max_length"].format(
+                                    max_length=SearcherProperties.PHONE_NUMBER_MAX_LENGTH.value,
+                                ),
+                                ERROR_MESSAGES["phone_in_use"],
+                            ],
+                        },
+                    },
+                ),
             ],
         ),
         401: OpenApiResponse(

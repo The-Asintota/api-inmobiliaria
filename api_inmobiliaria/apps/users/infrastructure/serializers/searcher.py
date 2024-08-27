@@ -33,7 +33,7 @@ class SearcherRoleDataSerializer(ErrorMessagesSerializer):
         },
         validators=[
             RegexValidator(
-                regex=r"^[A-Za-zñÑ\s]+$",
+                regex=r"^[A-Za-zñÑáéíóúÁÉÍÓÚ\s]+$",
                 code="invalid_data",
                 message=ERROR_MESSAGES["invalid"],
             ),
@@ -49,7 +49,7 @@ class SearcherRoleDataSerializer(ErrorMessagesSerializer):
         },
         validators=[
             RegexValidator(
-                regex=r"^[A-Za-zñÑ\s]+$",
+                regex=r"^[A-Za-zñÑáéíóúÁÉÍÓÚ\s]+$",
                 code="invalid_data",
                 message=ERROR_MESSAGES["invalid"],
             ),

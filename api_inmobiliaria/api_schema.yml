@@ -734,9 +734,7 @@ paths:
                   - **Email:** Must not exceed 40 characters, must follow standard email format and must not be in use.
                   - **Identification number (cc):** Must not exceed 10 characters, must be at least 6 characters, must contain only numbers between 0-9 and must not be in use.
                   - **Address** Must not exceed 90 characters and must not be in use.
-                  - **Phone number** Must not exceed 25 characters and must not be in use.
-
-                  Request responses that include messages in Spanish indicate that these are messages intended for use on the frontend by the client.
+                  - **Phone number** Must not exceed 19 characters and must not be in use.
           application/x-www-form-urlencoded:
             schema:
               $ref: '#/components/schemas/PatchedSearcherRoleDataRequest'
@@ -767,7 +765,7 @@ paths:
                       phone_number: '+573111111111'
                       address: Calle 123
                       is_phone_verified: false
-                  summary: Get user data
+                  summary: New user data
                   description: User information is displayed without showing sensitive
                     data, it is possible that some of this data has a 'null' value.
           description: '**(OK)** Updated user information is returned.'
@@ -785,11 +783,37 @@ paths:
                   value:
                     code: invalid_request_data
                     detail:
-                      non_field_errors:
-                      - You must provide at least one field to update.
-                  summary: Empty data
-                  description: At least one piece of user data is required to proceed
-                    with the update.
+                      name:
+                      - Este campo no puede estar en blanco.
+                      - Este campo no puede ser nulo.
+                      - El valor ingresado es inválido.
+                      - El valor ingresado no puede tener más de 40 caracteres.
+                      last_name:
+                      - Este campo no puede estar en blanco.
+                      - Este campo no puede ser nulo.
+                      - El valor ingresado es inválido.
+                      - El valor ingresado no puede tener más de 40 caracteres.
+                      address:
+                      - Este campo no puede estar en blanco.
+                      - Este campo no puede ser nulo.
+                      - El valor ingresado es inválido.
+                      - El valor ingresado no puede tener más de 90 caracteres.
+                      - Esta dirección ya está en uso.
+                      cc:
+                      - Este campo no puede estar en blanco.
+                      - Este campo no puede ser nulo.
+                      - El valor ingresado es inválido.
+                      - El valor ingresado no puede tener más de 10 caracteres.
+                      - El valor ingresado debe tener al menos 6 caracteres.
+                      - Este número de identificación ya está en uso.
+                      phone_number:
+                      - Este campo no puede estar en blanco.
+                      - Este campo no puede ser nulo.
+                      - El valor ingresado es inválido.
+                      - El valor ingresado no puede tener más de 19 caracteres.
+                      - Este número de teléfono ya está en uso.
+                  summary: Invalid data
+                  description: These are the possible error messages for each field.
           description: '**(BAD_REQUEST)** The request data is invalid, error messages
             are returned for each field that did not pass validations.'
         '401':
@@ -912,12 +936,12 @@ components:
         name:
           type: string
           minLength: 1
-          pattern: ^[A-Za-z\u00f1\u00d1\s]+$
+          pattern: ^[A-Za-z\u00f1\u00d1\u00e1\u00e9\u00ed\u00f3\u00fa\u00c1\u00c9\u00cd\u00d3\u00da\s]+$
           maxLength: 40
         last_name:
           type: string
           minLength: 1
-          pattern: ^[A-Za-z\u00f1\u00d1\s]+$
+          pattern: ^[A-Za-z\u00f1\u00d1\u00e1\u00e9\u00ed\u00f3\u00fa\u00c1\u00c9\u00cd\u00d3\u00da\s]+$
           maxLength: 40
         cc:
           type: string
@@ -931,7 +955,7 @@ components:
         phone_number:
           type: string
           minLength: 1
-          maxLength: 25
+          maxLength: 19
     SearcherRegisterUserRequest:
       type: object
       description: Defines the fields that are required for the searcher user registration.

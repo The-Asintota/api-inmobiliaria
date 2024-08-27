@@ -44,4 +44,4 @@ class SearcherProperties(Enum):
     CC_MIN_LENGTH = 6
     CC_MAX_LENGTH = 10
     ADDRESS_MAX_LENGTH = 90
-    PHONE_NUMBER_MAX_LENGTH = 25
+    PHONE_NUMBER_MAX_LENGTH = 19
